@@ -1,8 +1,8 @@
 use sqlx::postgres::PgPool;
 use tonic::{Request, Response, Status};
 
-// bring in our messages
 use crate::proto::auth::auth_server::Auth;
+// bring in our messages
 use crate::proto::auth::{LoginRequest, RegisterRequest, Token};
 
 #[derive(Debug)]
@@ -12,6 +12,14 @@ pub struct AuthenticationService {
 
 #[tonic::async_trait]
 impl Auth for AuthenticationService {
+    // the % means that fmt::Display will be used as the format
+    #[tracing::instrument(
+        name = "User Login"
+        skip(self, request)
+        fields(
+            username = %request.get_ref().username
+        )
+    )]
     async fn login(&self, request: Request<LoginRequest>) -> Result<Response<Token>, Status> {
         let login_request = request.into_inner();
 
@@ -32,6 +40,14 @@ impl Auth for AuthenticationService {
         Ok(Response::new(token))
     }
 
+    #[tracing::instrument(
+        name = "Registering a new user"
+        skip(self, request)
+        fields(
+            username = %request.get_ref().username,
+            email = %request.get_ref().email
+        )
+    )]
     async fn register(&self, request: Request<RegisterRequest>) -> Result<Response<Token>, Status> {
         let register_request = request.into_inner();
 
