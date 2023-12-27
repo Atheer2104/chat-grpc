@@ -1,4 +1,5 @@
 use auth::configuration::get_configuration;
+use auth::logging::{get_subscriber, init_subscriber};
 use sqlx::postgres::PgPool;
 use std::error::Error;
 use tonic::transport::Server;
@@ -9,6 +10,9 @@ use auth::server::AuthenticationService;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    let subscriber = get_subscriber("chat-grpc-auth".into(), "info".into(), std::io::stdout);
+    init_subscriber(subscriber);
+
     let configuartion = get_configuration().expect("Failed to read config file");
     let connection_pool = PgPool::connect(&configuartion.database.connection_string())
         .await
