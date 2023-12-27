@@ -14,8 +14,10 @@ pub struct RegisterRequest {
     #[prost(string, tag = "2")]
     pub lastname: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
-    pub email: ::prost::alloc::string::String,
+    pub username: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
+    pub email: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
     pub password: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]

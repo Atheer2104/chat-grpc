@@ -14,8 +14,9 @@ message LoginRequest {
 message RegisterRequest {
     string firstname = 1;
     string lastname = 2;
-    string email = 3;
-    string password = 4;
+    string username = 3;
+    string email = 4;
+    string password = 5;
 }
 
 message Token {
