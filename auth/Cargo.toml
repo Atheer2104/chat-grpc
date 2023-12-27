@@ -10,7 +10,21 @@ tonic = "0.10"
 prost = "0.12"
 tokio = { version = "1.0", features = ["full"] }
 sqlx = { version = "0.7", features = [ "runtime-tokio", "tls-rustls", "postgres", "macros", "migrate"]}
+serde = "1.0.193"
+config = {version = "0.13.4", default-features = false, features = ["yaml"]}
+tonic-reflection = "0.10.2"
 
 
 [build-dependencies]
 tonic-build = "0.10"
+
+[[bin]]
+name = "auth-server"
+path = "src/server.rs"
+
+[[bin]]
+name = "auth-client"
+path = "src/client.rs"
+
+[lib]
+path = "src/lib.rs"
