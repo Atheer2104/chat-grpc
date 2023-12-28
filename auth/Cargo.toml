@@ -26,13 +26,19 @@ tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["registry", "env-filter"] }
 tracing-log = "0.2.0"
 tracing-bunyan-formatter = "0.3.9"
+secrecy = { version = "0.8.0", features = ["serde"] }
+tonic-health = "0.10.2"
+# we use the v4 feature flag so we can generate random uuid
+uuid = {version = "1.6.1", features = ["v4"]}
 
 
-
+[dev-dependencies]
+once_cell = "1.19.0"
 
 
 [build-dependencies]
 tonic-build = "0.10"
+
 
 [[bin]]
 name = "auth-server"
@@ -40,7 +46,7 @@ path = "src/bin/server.rs"
 
 [[bin]]
 name = "auth-client"
-path = "src/bin/ client.rs"
+path = "src/bin/client.rs"
 
 [lib]
 path = "src/lib.rs"

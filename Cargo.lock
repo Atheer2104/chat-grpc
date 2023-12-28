@@ -108,17 +108,21 @@ name = "auth"
 version = "0.1.0"
 dependencies = [
  "config",
+ "once_cell",
  "prost",
+ "secrecy",
  "serde",
  "sqlx",
  "tokio",
  "tonic",
  "tonic-build",
+ "tonic-health",
  "tonic-reflection",
  "tracing",
  "tracing-bunyan-formatter",
  "tracing-log 0.2.0",
  "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]
@@ -1419,6 +1423,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "secrecy"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9bd1c54ea06cfd2f6b63219704de0b9b4f72dcc2b8fdef820be6cd799780e91e"
+dependencies = [
+ "serde",
+ "zeroize",
+]
+
+[[package]]
 name = "serde"
 version = "1.0.193"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1998,6 +2012,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "tonic-health"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f80db390246dfb46553481f6024f0082ba00178ea495dbb99e70ba9a4fafb5e1"
+dependencies = [
+ "async-stream",
+ "prost",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+]
+
+[[package]]
 name = "tonic-reflection"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2200,6 +2227,15 @@ name = "urlencoding"
 version = "2.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "daf8dba3b7eb870caf1ddeed7bc9d2a049f3cfdfae7cb521b087cc33ae4c49da"
+
+[[package]]
+name = "uuid"
+version = "1.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e395fcf16a7a3d8127ec99782007af141946b4795001f876d54fb0d55978560"
+dependencies = [
+ "getrandom",
+]
 
 [[package]]
 name = "valuable"
