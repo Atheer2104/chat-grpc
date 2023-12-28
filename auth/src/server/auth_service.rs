@@ -7,7 +7,7 @@ use crate::proto::auth::{LoginRequest, RegisterRequest, Token};
 
 #[derive(Debug)]
 pub struct AuthenticationService {
-    pub pool: PgPool,
+    pub db_pool: PgPool,
 }
 
 #[tonic::async_trait]
@@ -23,13 +23,22 @@ impl Auth for AuthenticationService {
     async fn login(&self, request: Request<LoginRequest>) -> Result<Response<Token>, Status> {
         let login_request = request.into_inner();
 
+        if login_request.username.is_empty() {
+            return Err(Status::invalid_argument("name is empty"));
+        }
+
+        if login_request.password.is_empty() {
+            return Err(Status::invalid_argument("password is empty"));
+        }
+
         sqlx::query!(
             r#"SELECT username, password FROM account
            WHERE username = $1 AND password = $2"#,
             login_request.username,
             login_request.password
         )
-        .fetch_one(&self.pool)
+        // this should be changed to fetch_optional this can be done latter for propper error handeling
+        .fetch_one(&self.db_pool)
         .await
         .expect("something went wrong");
 
@@ -62,7 +71,7 @@ impl Auth for AuthenticationService {
             register_request.username,
             register_request.password,
         )
-        .execute(&self.pool)
+        .execute(&self.db_pool)
         .await
         .expect("something went wrong");
 
