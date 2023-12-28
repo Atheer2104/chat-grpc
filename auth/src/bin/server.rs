@@ -1,12 +1,11 @@
 use auth::configuration::get_configuration;
 use auth::logging::{get_subscriber, init_subscriber};
+use secrecy::ExposeSecret;
 use sqlx::postgres::PgPool;
 use std::error::Error;
-use tonic::transport::Server;
+use std::net::SocketAddr;
 
-use auth::proto::auth::auth_server::AuthServer;
-use auth::proto::auth::FILE_DESCRIPTOR_SET;
-use auth::server::AuthenticationService;
+use auth::server::run_server;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -14,25 +13,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     init_subscriber(subscriber);
 
     let configuartion = get_configuration().expect("Failed to read config file");
-    let connection_pool = PgPool::connect(&configuartion.database.connection_string())
-        .await
-        .expect("failed to connect to postgres");
+    let connection_pool =
+        PgPool::connect(configuartion.database.connection_string().expose_secret())
+            .await
+            .expect("failed to connect to postgres");
 
-    let address = format!("[::1]:{}", configuartion.application_port).parse()?;
-    let auth = AuthenticationService {
-        pool: connection_pool,
-    };
+    let address: SocketAddr = format!("[::1]:{}", configuartion.application_port).parse()?;
 
-    let reflection_service = tonic_reflection::server::Builder::configure()
-        .register_encoded_file_descriptor_set(FILE_DESCRIPTOR_SET)
-        .build()
-        .unwrap();
-
-    Server::builder()
-        .add_service(AuthServer::new(auth))
-        .add_service(reflection_service)
-        .serve(address)
-        .await?;
+    run_server(connection_pool, address).await?;
 
     Ok(())
 }
