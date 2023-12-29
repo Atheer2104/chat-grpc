@@ -1,6 +1,6 @@
 use auth::configuration::get_configuration;
 use auth::proto::auth::auth_client::AuthClient;
-use auth::proto::auth::{LoginRequest, RegisterRequest};
+use auth::proto::auth::LoginRequest;
 use tonic::Request;
 
 use std::error::Error;
@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let response = client
         .login(Request::new(LoginRequest {
             username: "atheer2104".into(),
-            password: "hej 123".into(),
+            password: "".into(),
         }))
         .await;
 

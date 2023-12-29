@@ -5,7 +5,7 @@ use sqlx::postgres::PgPool;
 use std::error::Error;
 use std::net::SocketAddr;
 
-use auth::server::run_server;
+use auth::server::build_server;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -20,7 +20,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let address: SocketAddr = format!("[::1]:{}", configuartion.application_port).parse()?;
 
-    run_server(connection_pool, address).await?;
+    //println!("Address {:?}", address);
+
+    build_server(connection_pool).serve(address).await?;
+
+    // .serve(address).await?;
 
     Ok(())
 }
