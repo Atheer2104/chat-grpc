@@ -3,11 +3,15 @@ use std::net::SocketAddr;
 use auth::{
     configuration::{get_configuration, DatabaseSettings},
     logging::{get_subscriber, init_subscriber},
-    server::run_server,
+    proto::auth::{auth_client::AuthClient, LoginRequest, Token},
+    server::build_server,
 };
 use once_cell::sync::Lazy;
 use secrecy::ExposeSecret;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
+
+use tonic::{Response, Status};
+
 use uuid::Uuid;
 
 // this makes sure that we only initialize tracing only once for, this is because the test runs in parallel with would mean that
@@ -25,12 +29,12 @@ static TRACING: Lazy<()> = Lazy::new(|| {
     }
 });
 
-pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
+async fn configure_database(config: &DatabaseSettings) -> PgPool {
     let mut connection = PgConnection::connect(config.connection_string_no_db().expose_secret())
         .await
         .expect("Failed to connect to postgresql");
     connection
-        .execute(&*format!(r#"CREATE DATABASE {}"#, config.database_name))
+        .execute(&*format!(r#"CREATE DATABASE "{}";"#, config.database_name))
         .await
         .expect("Failed to create database");
 
@@ -51,22 +55,33 @@ pub struct App {
     pub db_pool: PgPool,
 }
 
-async fn spawn_app() -> App {
+impl App {
+    pub async fn login(
+        &self,
+        request: tonic::Request<LoginRequest>,
+    ) -> Result<Response<Token>, Status> {
+        let address = "http://[::1]:10000";
+        let mut client = AuthClient::connect(address)
+            .await
+            .expect("Failed to create client");
+
+        client.login(request).await
+    }
+}
+
+pub async fn spawn_app() -> App {
     // we force evaluate TRACING
     Lazy::force(&TRACING);
 
-    let address: SocketAddr = format!("[::1]:0")
-        .parse()
-        .expect("Failed to bind to a random port");
+    let address: SocketAddr = "[::1]:10000".parse().unwrap();
 
     let mut configuration = get_configuration().expect("Failed to read configuration.");
     configuration.database.database_name = Uuid::new_v4().to_string();
 
     let connection_pool = configure_database(&configuration.database).await;
 
-    run_server(connection_pool.clone(), address)
-        .await
-        .expect("Failed to create server");
+    let server = build_server(connection_pool.clone());
+    tokio::spawn(server.serve(address));
 
     App {
         address: address.to_string(),
