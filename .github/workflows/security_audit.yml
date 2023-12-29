@@ -1,0 +1,20 @@
+name: Security Audit
+# when the action will run here both schedule and push will activate the action
+on:
+  schedule:
+    # will be run at time 00:00 every monday
+    - cron: '0 0 * * 1'
+  # we check if push is done to .toml or .lock file
+  push:
+    paths:
+      - '**.toml'
+      - '**.lock'
+
+jobs:
+  security_audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/install-action@
+      - name: Scan for vulnerabilities
+        run: cargo deny check advisories
