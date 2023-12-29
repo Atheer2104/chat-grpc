@@ -1,18 +1,14 @@
+#![allow(unused_imports)]
 use sqlx::postgres::PgPool;
-use std::error::Error;
-use std::net::SocketAddr;
 
-use tonic::transport::Server;
+use tonic::transport::{server::Router, Server};
 use tonic_health::server::HealthReporter;
 
 use crate::proto::auth::auth_server::AuthServer;
 use crate::proto::auth::FILE_DESCRIPTOR_SET;
 use crate::server::AuthenticationService;
 
-pub async fn run_server(
-    connection_pool: PgPool,
-    address: SocketAddr,
-) -> Result<(), Box<dyn Error>> {
+pub fn build_server(connection_pool: PgPool) -> Router {
     let auth = AuthenticationService {
         db_pool: connection_pool,
     };
@@ -35,8 +31,4 @@ pub async fn run_server(
         // .add_service(health_service)
         .add_service(AuthServer::new(auth))
         .add_service(reflection_service)
-        .serve(address)
-        .await?;
-
-    Ok(())
 }

@@ -24,11 +24,11 @@ impl Auth for AuthenticationService {
         let login_request = request.into_inner();
 
         if login_request.username.is_empty() {
-            return Err(Status::invalid_argument("name is empty"));
+            return Err(Status::invalid_argument("missing username field"));
         }
 
         if login_request.password.is_empty() {
-            return Err(Status::invalid_argument("password is empty"));
+            return Err(Status::invalid_argument("missing password field"));
         }
 
         sqlx::query!(
