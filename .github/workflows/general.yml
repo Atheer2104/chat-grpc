@@ -11,7 +11,7 @@ env:
   # sqlx cli version
   SQLX_VERSION: 0.7.3
   # sqlx cli features
-  SQLX_FEATURES: "rustls, postgres"
+  SQLX_FEATURES: "rustls,postgres"
 
 
 jobs:
