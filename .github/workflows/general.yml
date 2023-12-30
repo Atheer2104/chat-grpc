@@ -1,0 +1,72 @@
+name: General
+
+on:
+  push:
+    branches:
+      - main
+  pull_request: {}
+
+env:
+  CARGO_TERM_COLOR: always
+  # sqlx cli version
+  SQLX_VERSION: 0.7.3
+  # sqlx cli features
+  SQLX_FEATURES: "rustls, postgres"
+
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    services:
+      # services that we use, we need to have a postgresql instance
+      postgres:
+        # here we provide the docker image
+        image: postgres:latest
+        # env variables used in the service
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: postgres
+        # we set the ports to expost (github runner machine container:docker host)
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+      # will install rust toolchain
+      - uses: dtolnay/rust-toolchain@stable
+      # smart caching for rust projects
+      - uses: Swatinem/rust-cache@v2
+        with:
+          # this key will be added to tha automatic 'job'-based cache key, this key can also be used in further different jobs
+          key: "sqlx-${{ env.SQLX_VERSION }}"
+      - name: Install sqlx cli
+        run:
+          cargo install sqlx-cli
+          --version=${{ env.SQLX_VERSION }}
+          --features=${{env.SQLX_FEATURES }}
+          --no-default-features
+          --locked
+      - name: Migrate database
+        run: |
+          sudo apt-get install libpq-dev -y
+          SKIP_DOCKER=true ./scripts/init_db.sh
+      - name: Check sqlx-data.json is up-to-date
+        run: |
+          cargo sqlx prepare --workspace --check
+      - name: Run tests
+        run: cargo test
+
+
+
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Formatting
+        run: cargo fmt --all --check
