@@ -5,6 +5,8 @@ use crate::proto::auth::auth_server::Auth;
 // bring in our messages
 use crate::proto::auth::{LoginRequest, RegisterRequest, Token};
 
+use super::UserRegisterSignupData;
+
 #[derive(Debug)]
 pub struct AuthenticationService {
     pub db_pool: PgPool,
@@ -58,22 +60,15 @@ impl Auth for AuthenticationService {
         )
     )]
     async fn register(&self, request: Request<RegisterRequest>) -> Result<Response<Token>, Status> {
-        let register_request = request.into_inner();
+        let reqister_request: UserRegisterSignupData = match request.into_inner().try_into() {
+            Err(_) => return Err(Status::invalid_argument("Invalid user details")),
+            Ok(s) => s,
+        };
 
-        // TODO have custom error messages
-        sqlx::query!(
-            r#"INSERT INTO account
-            (firstname, lastname, email, username, password)
-            VALUES ($1, $2, $3, $4, $5)"#,
-            register_request.firstname,
-            register_request.lastname,
-            register_request.email,
-            register_request.username,
-            register_request.password,
-        )
-        .execute(&self.db_pool)
-        .await
-        .expect("something went wrong");
+        match register_user_into_db(&self.db_pool, &reqister_request).await {
+            Err(_) => (),
+            Ok(_) => (),
+        };
 
         let token = Token {
             access_token: "123456".into(),
@@ -81,4 +76,32 @@ impl Auth for AuthenticationService {
 
         Ok(Response::new(token))
     }
+}
+
+#[tracing::instrument(
+    name = "Saving new user details into the database",
+    skip(db_pool, register_request)
+)]
+async fn register_user_into_db(
+    db_pool: &PgPool,
+    register_request: &UserRegisterSignupData,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"INSERT INTO account
+        (firstname, lastname, email, username, password)
+        VALUES ($1, $2, $3, $4, $5)"#,
+        register_request.firstname.as_ref(),
+        register_request.lastname.as_ref(),
+        register_request.email.as_ref(),
+        register_request.username.as_ref(),
+        register_request.password.as_ref(),
+    )
+    .execute(db_pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to exectute query: {:?}", e);
+        e
+    })?;
+
+    Ok(())
 }
