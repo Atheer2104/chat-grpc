@@ -12,19 +12,32 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let subscriber = get_subscriber("chat-grpc-auth".into(), "info".into(), std::io::stdout);
     init_subscriber(subscriber);
 
+    tracing::info!("Reading configuration");
+
     let configuartion = get_configuration().expect("Failed to read config file");
+
+    tracing::info!("Connecting to PostgreSQL database");
+
     let connection_pool =
         PgPool::connect(configuartion.database.connection_string().expose_secret())
             .await
             .expect("failed to connect to postgres");
 
-    let address: SocketAddr = format!("[::1]:{}", configuartion.application_port).parse()?;
+    tracing::info!("Successfully connected to PostgreSQL database");
 
     //println!("Address {:?}", address);
 
-    build_server(connection_pool).serve(address).await?;
+    tracing::info!("Building gRPC Server");
 
-    // .serve(address).await?;
+    let server = build_server(connection_pool);
+
+    tracing::info!("Succesfully built gRPC Server");
+
+    let address: SocketAddr = format!("[::1]:{}", configuartion.application_port).parse()?;
+
+    server.serve(address).await?;
+
+    tracing::info!("Successfully served Server");
 
     Ok(())
 }
