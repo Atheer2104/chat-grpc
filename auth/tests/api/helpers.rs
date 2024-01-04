@@ -3,14 +3,14 @@ use std::net::SocketAddr;
 use auth::{
     configuration::{get_configuration, DatabaseSettings},
     logging::{get_subscriber, init_subscriber},
-    proto::auth::{auth_client::AuthClient, LoginRequest, Token},
+    proto::auth::{auth_client::AuthClient, LoginRequest, RegisterRequest, Token},
     server::build_server,
 };
 use once_cell::sync::Lazy;
 use secrecy::ExposeSecret;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 
-use tonic::{Response, Status};
+use tonic::{Request, Response, Status};
 
 use uuid::Uuid;
 
@@ -60,12 +60,24 @@ impl App {
         &self,
         request: tonic::Request<LoginRequest>,
     ) -> Result<Response<Token>, Status> {
-        let address = "http://[::1]:10000";
+        let address = format!("http://{}", self.address);
         let mut client = AuthClient::connect(address)
             .await
             .expect("Failed to create client");
 
         client.login(request).await
+    }
+
+    pub async fn register(
+        &self,
+        request: Request<RegisterRequest>,
+    ) -> Result<Response<Token>, Status> {
+        let address = format!("http://{}", self.address);
+        let mut client = AuthClient::connect(address)
+            .await
+            .expect("Failed to create client");
+
+        client.register(request).await
     }
 }
 
