@@ -34,8 +34,18 @@ validator = "0.16.1"
 unicode-segmentation = "1.10.1"
 
 [dev-dependencies]
+# this is used for for once initiasation of shared data between integrations tests
 once_cell = "1.19.0"
-
+# this crate adds more asserts
+claims = "0.7.1"
+# this crate is used for property based testing
+quickcheck = "1.0.3"
+# this crate is used so one can use the #[quickcheck] attribute
+quickcheck_macros = "1.0.0"
+# used to generate fake data
+fake = "2.9.2"
+# used to create PRNG
+rand = "0.8.5"
 
 [build-dependencies]
 tonic-build = "0.10"
