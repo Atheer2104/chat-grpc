@@ -49,7 +49,7 @@ jobs:
           --no-default-features
           --locked
       - name: Install protoc
-        run: apt install -y protobuf-compiler
+        uses: arduino/setup-protoc@v2
       - name: Migrate database
         run: |
           sudo apt-get install libpq-dev -y
