@@ -55,7 +55,7 @@ mod tests {
 
     // this is the trait that we have to implement which represents the types that can be randomly generated
     impl Arbitrary for ValidEmail {
-        fn arbitrary(g: &mut Gen) -> Self {
+        fn arbitrary(_g: &mut Gen) -> Self {
             // stupid fix becuase Gen is a struct and not a trait that implemetns RNG which means that, we crate a new rng from scratch each tim
             // but this rng is very fast and it's what Gen consists actually of
             let mut rng = SmallRng::from_entropy();

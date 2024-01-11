@@ -44,7 +44,7 @@ quickcheck = "1.0.3"
 quickcheck_macros = "1.0.0"
 # used to generate fake data
 fake = "2.9.2"
-# used to create PRNG
+# used to create PRNGs
 rand = "0.8.5"
 
 [build-dependencies]

@@ -39,11 +39,12 @@ impl DatabaseSettings {
 }
 
 pub fn get_configuration() -> Result<Settings, config::ConfigError> {
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/configuration/config.yaml");
+
+    // println!("path: {}", path);
+
     let settings = config::Config::builder()
-        .add_source(config::File::new(
-            "configuration/config.yaml",
-            config::FileFormat::Yaml,
-        ))
+        .add_source(config::File::new(path, config::FileFormat::Yaml))
         .build()?;
 
     settings.try_deserialize::<Settings>()
