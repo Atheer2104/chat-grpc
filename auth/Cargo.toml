@@ -32,6 +32,11 @@ tonic-health = "0.10.2"
 uuid = {version = "1.6.1", features = ["v4"]}
 validator = "0.16.1"
 unicode-segmentation = "1.10.1"
+# used to create PRNGs
+rand = "0.8.5"
+anyhow = "1.0.79"
+thiserror = "1.0.56"
+tonic-types = "0.10.2"
 
 [dev-dependencies]
 # this is used for for once initiasation of shared data between integrations tests
@@ -44,8 +49,6 @@ quickcheck = "1.0.3"
 quickcheck_macros = "1.0.0"
 # used to generate fake data
 fake = "2.9.2"
-# used to create PRNGs
-rand = "0.8.5"
 
 [build-dependencies]
 tonic-build = "0.10"
