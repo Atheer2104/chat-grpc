@@ -2,6 +2,7 @@ use auth::configuration::get_configuration;
 use auth::proto::auth::auth_client::AuthClient;
 use auth::proto::auth::LoginRequest;
 use tonic::Request;
+use tonic_types::StatusExt;
 
 use std::error::Error;
 // bring in our client
@@ -35,7 +36,24 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }))
         .await;
 
-    println!("RESPONSE={:?}", response);
+    match response {
+        Ok(res) => {
+            println!("RESPONSE={:?}", res);
+        }
+        Err(status) => {
+            // note that these are just bytes
+            let error_details = status.get_error_details();
+
+            // check if we have a bad request
+            if let Some(bad_request) = error_details.bad_request() {
+                println!("BAD_REQUEST: {:?}", bad_request)
+            }
+
+            if let Some(message) = error_details.localized_message() {
+                println!("localized message: {:?}", message);
+            }
+        }
+    }
 
     Ok(())
 }
