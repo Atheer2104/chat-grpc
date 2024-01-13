@@ -1,13 +1,13 @@
-use super::validate_name;
+use super::{validate_name, RegisterDataError};
 
 #[derive(Debug)]
 pub struct Firstname(String);
 
 impl Firstname {
-    pub fn parse(s: String) -> Result<Firstname, String> {
+    pub fn parse(s: String) -> Result<Firstname, RegisterDataError> {
         match validate_name(&s) {
             Ok(_) => Ok(Self(s)),
-            Err(_) => Err(format!("{} is not a valid firstname", s)),
+            Err(e) => Err(RegisterDataError::new("firstname".into(), e.into())),
         }
     }
 }

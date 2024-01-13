@@ -1,14 +1,28 @@
+use super::RegisterDataError;
+use thiserror::Error;
 use validator::validate_email;
 
 #[derive(Debug)]
 pub struct Email(String);
 
+#[derive(Debug, Error)]
+pub enum ValidateEmailError {
+    #[error("provided email is not a valid email")]
+    NotValidEmail,
+}
+
+impl From<ValidateEmailError> for RegisterDataError {
+    fn from(value: ValidateEmailError) -> Self {
+        RegisterDataError::new("email".into(), value.into())
+    }
+}
+
 impl Email {
-    pub fn parse(s: String) -> Result<Email, String> {
+    pub fn parse(s: String) -> Result<Email, ValidateEmailError> {
         if validate_email(&s) {
             Ok(Self(s))
         } else {
-            Err(format!("{} is not a valid e-mail", s))
+            Err(ValidateEmailError::NotValidEmail)
         }
     }
 }

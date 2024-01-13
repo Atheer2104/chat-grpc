@@ -1,20 +1,47 @@
-use super::UnicodeSegmentation;
+use super::{RegisterDataError, UnicodeSegmentation};
+use thiserror::Error;
 
 #[derive(Debug)]
 pub struct Password(String);
 
+#[derive(Debug, Error)]
+pub enum ValidatePasswordError {
+    #[error("password is empty empty or only contains whitespace")]
+    EmptyOrWhitespace,
+    #[error("password is shorter than {0} characters")]
+    TooShort(u8),
+    #[error("password is longer than {0} characters")]
+    TooLong(u8),
+}
+
+impl From<ValidatePasswordError> for RegisterDataError {
+    fn from(value: ValidatePasswordError) -> Self {
+        RegisterDataError::new("password".into(), value.into())
+    }
+}
+
+const MAX_PASSWORD_LENGTH: u8 = 255;
+const MIN_PASSWORD_LENGTH: u8 = 8;
+
 impl Password {
     // TODO: add min length for password
-    pub fn parse(s: String) -> Result<Password, String> {
-        let is_empty_or_whitespace = s.trim().is_empty();
-
-        let is_too_long = s.graphemes(true).count() > 255;
-
-        if is_empty_or_whitespace || is_too_long {
-            Err(format!("{} is not a valid password", s))
-        } else {
-            Ok(Self(s))
+    pub fn parse(s: String) -> Result<Password, ValidatePasswordError> {
+        // is_empty_or_whitespace
+        if s.trim().is_empty() {
+            return Err(ValidatePasswordError::EmptyOrWhitespace);
         }
+
+        // is_not_min_length
+        if s.graphemes(true).count() < MIN_PASSWORD_LENGTH.into() {
+            return Err(ValidatePasswordError::TooShort(MIN_PASSWORD_LENGTH));
+        }
+
+        // is_too_long
+        if s.graphemes(true).count() > MAX_PASSWORD_LENGTH.into() {
+            return Err(ValidatePasswordError::TooLong(MAX_PASSWORD_LENGTH));
+        }
+
+        Ok(Self(s))
     }
 }
 

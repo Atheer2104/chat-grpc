@@ -10,18 +10,38 @@ pub use lastname::*;
 pub use password::*;
 pub use username::*;
 
+use thiserror::Error;
 use unicode_segmentation::UnicodeSegmentation;
 
-pub fn validate_name(s: &String) -> Result<(), ()> {
-    let is_empty_or_whitespace = s.trim().is_empty();
+use super::RegisterDataError;
 
-    let is_too_long = s.graphemes(true).count() > 255;
+#[derive(Debug, Error)]
+pub enum ValidateNameError {
+    #[error("name is empty of only contains whitespace")]
+    EmptyOrWhitepace,
+    #[error("name is longer than {0} characters")]
+    TooLong(u8),
+    #[error("name contains numerics")]
+    ContainNumbers,
+}
 
-    let is_contain_numbers = s.chars().any(|c| c.is_numeric());
+const MAX_NAME_LENGTH: u8 = 255;
 
-    if is_empty_or_whitespace || is_too_long || is_contain_numbers {
-        Err(())
-    } else {
-        Ok(())
+pub fn validate_name(s: &String) -> Result<(), ValidateNameError> {
+    // is_empty_or_whitespace
+    if s.trim().is_empty() {
+        return Err(ValidateNameError::EmptyOrWhitepace);
     }
+
+    // is_too_long
+    if s.graphemes(true).count() > MAX_NAME_LENGTH.into() {
+        return Err(ValidateNameError::TooLong(MAX_NAME_LENGTH));
+    }
+
+    // is_contain_numbers
+    if s.chars().any(|c| c.is_numeric()) {
+        return Err(ValidateNameError::ContainNumbers);
+    }
+
+    Ok(())
 }

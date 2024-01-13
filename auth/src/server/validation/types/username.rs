@@ -1,23 +1,50 @@
-use super::UnicodeSegmentation;
+use super::{RegisterDataError, UnicodeSegmentation};
+use thiserror::Error;
 
 #[derive(Debug)]
 pub struct Username(String);
 
+#[derive(Debug, Error)]
+pub enum ValidateUsernameError {
+    #[error("username is empty or only contains whitespace")]
+    EmptyOrWhitespace,
+    #[error("username is longer than {0} charcters")]
+    TooLong(u8),
+    #[error("username contains '{0}' which is a forbidden character")]
+    ContainForbiddenCharacater(char),
+}
+
+impl From<ValidateUsernameError> for RegisterDataError {
+    fn from(value: ValidateUsernameError) -> Self {
+        RegisterDataError::new("username".into(), value.into())
+    }
+}
+
+const FORBIDDEN_CHARACTERS: [char; 9] = ['/', '(', ')', '"', '<', '>', '\\', '{', '}'];
+const MAX_USERNAME_LENGTH: u8 = 255;
+
 impl Username {
-    pub fn parse(s: String) -> Result<Username, String> {
-        let is_empty_or_whitespace = s.trim().is_empty();
-
-        let is_too_long = s.graphemes(true).count() > 255;
-
-        // some forbidden characters
-        let forbidden_characters = ['/', '(', ')', '"', '<', '>', '\\', '{', '}'];
-        let contains_forbidden_characters = s.chars().any(|c| forbidden_characters.contains(&c));
-
-        if is_empty_or_whitespace || is_too_long || contains_forbidden_characters {
-            Err(format!("{} is not a valid username", s))
-        } else {
-            Ok(Self(s))
+    pub fn parse(s: String) -> Result<Username, ValidateUsernameError> {
+        // is_empty_or_whitespace
+        if s.trim().is_empty() {
+            return Err(ValidateUsernameError::EmptyOrWhitespace);
         }
+
+        // is_too_long
+        if s.graphemes(true).count() > MAX_USERNAME_LENGTH.into() {
+            return Err(ValidateUsernameError::TooLong(MAX_USERNAME_LENGTH));
+        }
+
+        let is_forbidden_char = s.chars().find(|c| FORBIDDEN_CHARACTERS.contains(c));
+
+        // contains_forbidden_characters
+        if let Some(forbidden_char) = is_forbidden_char {
+            return Err(ValidateUsernameError::ContainForbiddenCharacater(
+                forbidden_char,
+            ));
+        }
+
+        Ok(Self(s))
     }
 }
 
