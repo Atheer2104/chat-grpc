@@ -12,7 +12,7 @@ use crate::proto::auth::auth_server::Auth;
 // bring in our messages
 use crate::proto::auth::{LoginRequest, RegisterRequest, Token};
 
-pub use super::UserRegisterSignupData;
+pub use super::RegisterData;
 
 #[derive(Debug)]
 pub struct AuthenticationService {
@@ -75,8 +75,22 @@ impl Auth for AuthenticationService {
         )
     )]
     async fn register(&self, request: Request<RegisterRequest>) -> Result<Response<Token>, Status> {
-        let reqister_request: UserRegisterSignupData = match request.into_inner().try_into() {
-            Err(_) => return Err(Status::invalid_argument("Invalid user details")),
+        // this is needed for type annotation
+        let request_result: Result<RegisterData, _> = request.into_inner().try_into();
+
+        let reqister_request = match request_result {
+            Err(e) => {
+                let error_details =
+                    ErrorDetails::with_bad_request_violation(e.field, e.message.to_string());
+
+                let status = Status::with_error_details(
+                    Code::InvalidArgument,
+                    "bad request, Invalid arguments",
+                    error_details,
+                );
+
+                return Err(status);
+            }
             Ok(s) => s,
         };
 

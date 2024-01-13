@@ -1,4 +1,4 @@
-use super::UserRegisterSignupData;
+use super::RegisterData;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use sqlx::{Executor, Postgres, Row, Transaction};
@@ -25,7 +25,7 @@ pub fn generate_auth_token() -> String {
 )]
 pub async fn register_user_into_db(
     transaction: &mut Transaction<'_, Postgres>,
-    register_request: &UserRegisterSignupData,
+    register_request: &RegisterData,
 ) -> Result<UserId, sqlx::Error> {
     let query = sqlx::query!(
         r#"INSERT INTO account

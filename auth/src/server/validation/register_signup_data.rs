@@ -46,7 +46,7 @@ impl TryFrom<RegisterRequest> for RegisterData {
     }
 }
 
-pub struct UserRegisterSignupData {
+pub struct RegisterData {
     pub firstname: Firstname,
     pub lastname: Lastname,
     pub username: Username,
