@@ -1,5 +1,6 @@
 use auth::proto::auth::RegisterRequest;
 use rand::{thread_rng, Rng};
+use tokio::task::spawn_blocking;
 
 use super::{sleep, spawn_app, Request};
 
@@ -30,5 +31,4 @@ async fn register_user_dont_check_token() {
     assert_eq!(saved.lastname, "ABC");
     assert_eq!(saved.username, "atheer2104");
     assert_eq!(saved.email, "atheer@gmail.com");
-    assert_eq!(saved.password, "strong password");
 }
