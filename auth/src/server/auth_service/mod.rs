@@ -1,7 +1,9 @@
 mod login;
+mod password;
 mod register;
 
 pub use login::*;
+pub use password::*;
 pub use register::*;
 
 use sqlx::postgres::PgPool;
@@ -58,9 +60,7 @@ impl Auth for AuthenticationService {
                 CheckUserExistsError::NonExistingUser => {
                     return Err(Status::unauthenticated(e.to_string()))
                 }
-                CheckUserExistsError::DatabaseError(_) => {
-                    return Err(Status::internal(e.to_string()))
-                }
+                _ => return Err(Status::internal(e.to_string())),
             },
         };
 
@@ -108,7 +108,7 @@ impl Auth for AuthenticationService {
             }
         };
 
-        let user_id = match register_user_into_db(&mut transaction, &reqister_request).await {
+        let user_id = match register_user_into_db(&mut transaction, reqister_request).await {
             Err(_) => return Err(Status::internal("Could not retrieve user_id")),
             Ok(user_id) => user_id,
         };
