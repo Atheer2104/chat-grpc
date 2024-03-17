@@ -4,6 +4,7 @@ use secrecy::{ExposeSecret, Secret};
 pub struct Settings {
     pub database: DatabaseSettings,
     pub application_port: u16,
+    pub argon: ArgonSettings,
 }
 
 #[derive(serde::Deserialize)]
@@ -13,6 +14,14 @@ pub struct DatabaseSettings {
     pub port: u16,
     pub host: String,
     pub database_name: String,
+}
+
+#[derive(serde::Deserialize)]
+pub struct ArgonSettings {
+    pub variant: String,
+    pub iterations: u32,
+    pub parallelism: u32,
+    pub memory: u32,
 }
 
 impl DatabaseSettings {
