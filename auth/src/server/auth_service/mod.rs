@@ -42,13 +42,6 @@ impl Auth for AuthenticationService {
             error_details.add_bad_request_violation("password", "password field is empty");
         }
 
-        if check_user_exists(login_request, &self.db_pool)
-            .await
-            .is_err()
-        {
-            error_details.set_localized_message("en-US", "The login information you provided is not valid. Please check your username and password and try again.");
-        }
-
         if error_details.has_bad_request_violations() {
             let status = Status::with_error_details(
                 Code::InvalidArgument,
@@ -58,6 +51,18 @@ impl Auth for AuthenticationService {
 
             return Err(status);
         }
+
+        match check_user_exists(login_request, &self.db_pool).await {
+            Ok(_) => (),
+            Err(e) => match e {
+                CheckUserExistsError::NonExistingUser => {
+                    return Err(Status::unauthenticated(e.to_string()))
+                }
+                CheckUserExistsError::DatabaseError(_) => {
+                    return Err(Status::internal(e.to_string()))
+                }
+            },
+        };
 
         let token = Token {
             access_token: "654321".into(),
