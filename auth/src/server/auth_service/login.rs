@@ -1,12 +1,21 @@
 use sqlx::PgPool;
+use thiserror::Error;
 
 use crate::proto::auth::LoginRequest;
+
+#[derive(Debug, Error)]
+pub enum CheckUserExistsError {
+    #[error("Provided credintels does not belong to any registered user")]
+    NonExistingUser,
+    #[error("Something went wrong in the DB: {0}")]
+    DatabaseError(#[from] sqlx::Error),
+}
 
 pub async fn check_user_exists(
     login_request: LoginRequest,
     db_pool: &PgPool,
-) -> Result<(), sqlx::Error> {
-    sqlx::query!(
+) -> Result<(), CheckUserExistsError> {
+    let query = sqlx::query!(
         r#"SELECT username, password FROM account
        WHERE username = $1 AND password = $2"#,
         login_request.username,
@@ -19,7 +28,9 @@ pub async fn check_user_exists(
         e
     })?;
 
-    // this is wrong because we have to check that the result value ie is valid i there exist a row currently we do not
-
-    Ok(())
+    match query {
+        // the user was successfully added
+        Some(_) => Ok(()),
+        None => Err(CheckUserExistsError::NonExistingUser),
+    }
 }
