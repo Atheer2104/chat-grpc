@@ -13,7 +13,6 @@ env:
   # sqlx cli features
   SQLX_FEATURES: "rustls,postgres"
 
-
 jobs:
   test:
     name: Tests
@@ -42,8 +41,7 @@ jobs:
           # this key will be added to tha automatic 'job'-based cache key, this key can also be used in further different jobs
           key: "sqlx-${{ env.SQLX_VERSION }}"
       - name: Install sqlx cli
-        run:
-          cargo install sqlx-cli
+        run: cargo install sqlx-cli
           --version=${{ env.SQLX_VERSION }}
           --features=${{env.SQLX_FEATURES }}
           --no-default-features
@@ -58,9 +56,7 @@ jobs:
         run: |
           cargo sqlx prepare --workspace --check
       - name: Run tests
-        run: cargo test
-
-
+        run: cargo test -- --test-threads=1
 
   fmt:
     name: Rustfmt
