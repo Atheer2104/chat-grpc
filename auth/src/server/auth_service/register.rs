@@ -1,7 +1,10 @@
-use super::RegisterData;
+use super::{compute_password_hash, RegisterData};
+use anyhow::Context;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
+use secrecy::ExposeSecret;
 use sqlx::{Executor, Postgres, Row, Transaction};
+use tokio::task::spawn_blocking;
 
 type UserId = i32;
 
@@ -25,18 +28,23 @@ pub fn generate_auth_token() -> String {
 )]
 pub async fn register_user_into_db(
     transaction: &mut Transaction<'_, Postgres>,
-    register_request: &RegisterData,
-) -> Result<UserId, sqlx::Error> {
+    register_request: RegisterData,
+) -> Result<UserId, anyhow::Error> {
+    let password_hash =
+        spawn_blocking(move || compute_password_hash(register_request.password.as_ref()))
+            .await?
+            .context("failed to hash password")?;
+
     let query = sqlx::query!(
         r#"INSERT INTO account
-        (firstname, lastname, email, username, password)
+        (firstname, lastname, email, username, password_hash)
         VALUES ($1, $2, $3, $4, $5)
         RETURNING user_id"#,
         register_request.firstname.as_ref(),
         register_request.lastname.as_ref(),
         register_request.email.as_ref(),
         register_request.username.as_ref(),
-        register_request.password.as_ref(),
+        password_hash.expose_secret(),
     );
 
     let row = transaction.fetch_one(query).await.map_err(|e| {
