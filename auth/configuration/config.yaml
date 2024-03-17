@@ -5,3 +5,8 @@ database:
   username: "postgres"
   password: "password"
   database_name: "users"
+argon:
+  variant: "Argon2id"
+  iterations: 2
+  parallelism: 1
+  memory: 19456
