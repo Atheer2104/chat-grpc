@@ -9,7 +9,6 @@ pub use password::*;
 pub use register::*;
 
 use redis::aio::MultiplexedConnection;
-use redis::{AsyncCommands, RedisResult};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -24,7 +23,7 @@ use crate::secrets::Secrets;
 
 pub use super::RegisterData;
 
-type RedisCon = Arc<Mutex<MultiplexedConnection>>;
+pub type RedisCon = Arc<Mutex<MultiplexedConnection>>;
 
 pub struct AuthenticationService {
     pub db_pool: PgPool,
@@ -77,10 +76,10 @@ impl Auth for AuthenticationService {
 
         let auth_token = match get_token_redis(self.redis_con.clone(), &user_id).await {
             Ok(e) => e,
-            Err(_) => match get_token(&self.db_pool, &user_id).await {
+            Err(_) => match get_token_db(&self.db_pool, &user_id).await {
                 Ok(e) => match e {
                     Some(token) => token,
-                    None => return Err(Status::internal("Couldn't get auth token")),
+                    None => return Err(Status::internal("Couldn't get auth token from DB")),
                 },
                 Err(_) => return Err(Status::internal("Couldn't get auth token")),
             },
@@ -154,7 +153,7 @@ impl Auth for AuthenticationService {
             Err(_) => return Err(Status::internal("Could not create a auth token")),
         };
 
-        if store_token(&mut transaction, user_id, &auth_token)
+        if store_token_db(&mut transaction, &user_id, &auth_token)
             .await
             .is_err()
         {

@@ -1,6 +1,6 @@
 use secrecy::Secret;
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Clone)]
 pub struct Secrets {
     pub jwt_secret: Secret<String>,
 }

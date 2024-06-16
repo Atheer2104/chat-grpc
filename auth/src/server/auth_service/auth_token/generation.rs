@@ -7,9 +7,8 @@ use sha2::Sha512;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-use super::RegisterData;
+use crate::server::RegisterData;
 
-// still temporary fake token
 pub fn generate_auth_token(
     secret_key: Secret<String>,
     user_id: &str,
