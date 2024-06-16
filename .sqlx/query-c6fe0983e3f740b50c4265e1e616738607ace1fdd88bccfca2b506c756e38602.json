@@ -1,22 +1,21 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT username, password FROM account\n       WHERE username = $1 AND password = $2",
+  "query": "SELECT user_id, password_hash from account WHERE username = $1",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "username",
-        "type_info": "Varchar"
+        "name": "user_id",
+        "type_info": "Int4"
       },
       {
         "ordinal": 1,
-        "name": "password",
+        "name": "password_hash",
         "type_info": "Text"
       }
     ],
     "parameters": {
       "Left": [
-        "Text",
         "Text"
       ]
     },
@@ -25,5 +24,5 @@
       false
     ]
   },
-  "hash": "eac1dfd4116503896f291caecccddef23eeff310171c430cfd59555e1373c6a7"
+  "hash": "c6fe0983e3f740b50c4265e1e616738607ace1fdd88bccfca2b506c756e38602"
 }
