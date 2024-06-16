@@ -37,10 +37,11 @@ pub async fn get_stored_password_hash(
     Ok(query)
 }
 
+#[tracing::instrument(name = "checking if user exists", skip(db_pool, login_request))]
 pub async fn check_user_exists(
     login_request: LoginRequest,
     db_pool: &PgPool,
-) -> Result<(), CheckUserExistsError> {
+) -> Result<i32, CheckUserExistsError> {
     let mut user_id = None;
     // some dummy value
     let mut expected_password_hash = Secret::new(
@@ -65,7 +66,7 @@ pub async fn check_user_exists(
 
     match user_id {
         // the user was successfully added
-        Some(_) => Ok(()),
+        Some(user_id) => Ok(user_id),
         None => Err(CheckUserExistsError::NonExistingUser),
     }
 }

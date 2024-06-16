@@ -15,7 +15,7 @@ pub enum AuthError {
 }
 
 #[tracing::instrument(
-    name = "Validate credentials",
+    name = "Validating password hash",
     skip(expected_password_hash, password_candidate)
 )]
 pub fn verify_password_hash(

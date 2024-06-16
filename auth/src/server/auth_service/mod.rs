@@ -1,24 +1,35 @@
-mod login;
+mod auth_token;
+mod check_existing_user;
 mod password;
 mod register;
 
-pub use login::*;
+pub use auth_token::*;
+pub use check_existing_user::*;
 pub use password::*;
 pub use register::*;
 
+use redis::aio::MultiplexedConnection;
+use redis::{AsyncCommands, RedisResult};
 use sqlx::postgres::PgPool;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use tokio::task::spawn_blocking;
 use tonic::{Code, Request, Response, Status};
 use tonic_types::{ErrorDetails, StatusExt};
 
 use crate::proto::auth::auth_server::Auth;
 // bring in our messages
 use crate::proto::auth::{LoginRequest, RegisterRequest, Token};
+use crate::secrets::Secrets;
 
 pub use super::RegisterData;
 
-#[derive(Debug)]
+type RedisCon = Arc<Mutex<MultiplexedConnection>>;
+
 pub struct AuthenticationService {
     pub db_pool: PgPool,
+    pub redis_con: RedisCon,
+    pub secrets: Secrets,
 }
 
 #[tonic::async_trait]
@@ -54,8 +65,8 @@ impl Auth for AuthenticationService {
             return Err(status);
         }
 
-        match check_user_exists(login_request, &self.db_pool).await {
-            Ok(_) => (),
+        let user_id = match check_user_exists(login_request, &self.db_pool).await {
+            Ok(e) => e,
             Err(e) => match e {
                 CheckUserExistsError::NonExistingUser => {
                     return Err(Status::unauthenticated(e.to_string()))
@@ -64,8 +75,19 @@ impl Auth for AuthenticationService {
             },
         };
 
+        let auth_token = match get_token_redis(self.redis_con.clone(), &user_id).await {
+            Ok(e) => e,
+            Err(_) => match get_token(&self.db_pool, &user_id).await {
+                Ok(e) => match e {
+                    Some(token) => token,
+                    None => return Err(Status::internal("Couldn't get auth token")),
+                },
+                Err(_) => return Err(Status::internal("Couldn't get auth token")),
+            },
+        };
+
         let token = Token {
-            access_token: "654321".into(),
+            access_token: auth_token,
         };
 
         Ok(Response::new(token))
@@ -98,6 +120,7 @@ impl Auth for AuthenticationService {
             }
             Ok(s) => s,
         };
+        let register_request_arc = Arc::new(reqister_request);
 
         let mut transaction = match self.db_pool.begin().await {
             Ok(transaction) => transaction,
@@ -108,12 +131,29 @@ impl Auth for AuthenticationService {
             }
         };
 
-        let user_id = match register_user_into_db(&mut transaction, reqister_request).await {
-            Err(_) => return Err(Status::internal("Could not retrieve user_id")),
-            Ok(user_id) => user_id,
+        let user_id =
+            match register_user_into_db(&mut transaction, register_request_arc.clone()).await {
+                Err(_) => return Err(Status::internal("Could not retrieve user_id")),
+                Ok(user_id) => user_id,
+            };
+
+        let secret_key = self.secrets.jwt_secret.clone();
+        let auth_token = match spawn_blocking(move || {
+            generate_auth_token(
+                secret_key,
+                user_id.to_string().as_str(),
+                register_request_arc.clone(),
+            )
+        })
+        .await
+        {
+            Ok(res) => match res {
+                Ok(e) => e,
+                Err(_) => return Err(Status::internal("Failed to generate auth token")),
+            },
+            Err(_) => return Err(Status::internal("Could not create a auth token")),
         };
 
-        let auth_token = generate_auth_token();
         if store_token(&mut transaction, user_id, &auth_token)
             .await
             .is_err()
@@ -121,11 +161,19 @@ impl Auth for AuthenticationService {
             return Err(Status::internal("Could not store auth token into DB"));
         }
 
-        if transaction.commit().await.is_err() {
-            return Err(Status::internal(
-                "Could not commit user register transaction",
-            ));
-        }
+        match transaction.commit().await {
+            Ok(_) => match store_token_redis(self.redis_con.clone(), &user_id, &auth_token).await {
+                Ok(_) => (),
+                Err(e) => {
+                    tracing::error!("Failed to save auth token to redis {:?}", e)
+                }
+            },
+            Err(_) => {
+                return Err(Status::internal(
+                    "Could not commit user register transaction",
+                ));
+            }
+        };
 
         let token = Token {
             access_token: auth_token,

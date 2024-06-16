@@ -10,3 +10,4 @@ argon:
   iterations: 2
   parallelism: 1
   memory: 19456
+redis_uri: "redis://127.0.0.1:6379"

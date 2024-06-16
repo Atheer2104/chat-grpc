@@ -1,4 +1,10 @@
 #![allow(unused_imports)]
+
+use std::sync::Arc;
+use tokio::sync::Mutex;
+
+use redis::aio::MultiplexedConnection;
+use redis::Client;
 use sqlx::postgres::PgPool;
 
 use tonic::transport::{server::Router, Server};
@@ -6,11 +12,18 @@ use tonic_health::server::HealthReporter;
 
 use crate::proto::auth::auth_server::AuthServer;
 use crate::proto::auth::FILE_DESCRIPTOR_SET;
+use crate::secrets::Secrets;
 use crate::server::AuthenticationService;
 
-pub fn build_server(connection_pool: PgPool) -> Router {
+pub fn build_server(
+    connection_pool: PgPool,
+    redis_con: MultiplexedConnection,
+    secrets: Secrets,
+) -> Router {
     let auth = AuthenticationService {
         db_pool: connection_pool,
+        redis_con: Arc::new(Mutex::new(redis_con)),
+        secrets,
     };
 
     // ! for some reason the health service is not working look into it later
