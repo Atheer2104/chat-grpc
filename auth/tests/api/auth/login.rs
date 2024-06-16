@@ -83,3 +83,58 @@ async fn login_as_a_registered_user() {
 
     assert!(login_request.is_ok());
 }
+
+#[tokio::test]
+async fn login_as_a_registered_user_check_token() {
+    let app = spawn_app().await;
+    let mut rng = thread_rng();
+    sleep(rng.gen_range(100..200)).await;
+
+    let username = String::from("atheer");
+
+    let register_response = app
+        .register(Request::new(RegisterRequest {
+            firstname: "atheer".into(),
+            lastname: "ABC".into(),
+            username: username.clone(),
+            email: "atheer@gmail.com".into(),
+            password: "strong password".into(),
+        }))
+        .await;
+
+    println!("REGISTER RESPONSE: {:?}", register_response);
+
+    assert!(register_response.is_ok());
+
+    let login_request = app
+        .login(Request::new(LoginRequest {
+            username: username.clone(),
+            password: "strong password".into(),
+        }))
+        .await;
+
+    let login_request_token = login_request
+        .expect("there was en error in the login request")
+        .into_inner()
+        .access_token;
+
+    let user_id = sqlx::query!(
+        r#"SELECT user_id FROM account WHERE username = $1 "#,
+        username
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .expect("failed to fetch from db")
+    .user_id;
+
+    let token_from_db = sqlx::query!(
+        r#"SELECT auth_token FROM auth_tokens WHERE user_id = $1 "#,
+        user_id
+    )
+    .fetch_one(&app.db_pool)
+    .await
+    .expect("failed to fetch from db")
+    .auth_token;
+
+    assert_eq!(token_from_db, login_request_token)
+}
