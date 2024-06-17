@@ -84,8 +84,9 @@ async fn register_user_check_token() {
 
     assert_eq!(auth_token_redis, auth_token_response.access_token);
 
-    let key: Hmac<Sha512> = Hmac::new_from_slice(app.secrets.jwt_secret.expose_secret().as_bytes())
-        .expect("failed to create hmac");
+    let key: Hmac<Sha512> =
+        Hmac::new_from_slice(app.dummy_secrets.jwt_secret.expose_secret().as_bytes())
+            .expect("failed to create hmac");
 
     let claims: BTreeMap<String, String> = auth_token_response
         .access_token

@@ -4,11 +4,11 @@ use auth::{
     configuration::{get_configuration, DatabaseSettings},
     logging::{get_subscriber, init_subscriber},
     proto::auth::{auth_client::AuthClient, LoginRequest, RegisterRequest, Token},
-    secrets::{get_secrets, Secrets},
+    secrets::Secrets,
     server::{build_server, RedisCon},
 };
 use once_cell::sync::Lazy;
-use secrecy::ExposeSecret;
+use secrecy::{ExposeSecret, Secret};
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 
 use tokio::sync::Mutex;
@@ -55,8 +55,8 @@ async fn configure_database(config: &DatabaseSettings) -> PgPool {
 pub struct App {
     pub address: String,
     pub db_pool: PgPool,
-    pub secrets: Secrets,
     pub redis_con: RedisCon,
+    pub dummy_secrets: Secrets,
 }
 
 impl App {
@@ -94,7 +94,12 @@ pub async fn spawn_app() -> App {
     let mut configuration = get_configuration().expect("Failed to read configuration.");
     configuration.database.database_name = Uuid::new_v4().to_string();
 
-    let secrets = get_secrets().expect("Failed to read secrets");
+    let dummy_jwt_secret =
+        String::from("04c1582b55ba64e0cd085d6edc23ab65578470ef03a8afb19897be536927f670");
+
+    let dummy_secrets = Secrets {
+        jwt_secret: Secret::new(dummy_jwt_secret),
+    };
 
     let connection_pool = configure_database(&configuration.database).await;
 
@@ -106,13 +111,17 @@ pub async fn spawn_app() -> App {
         .await
         .expect("failed to create redis connection");
 
-    let server = build_server(connection_pool.clone(), redis_con.clone(), secrets.clone());
+    let server = build_server(
+        connection_pool.clone(),
+        redis_con.clone(),
+        dummy_secrets.clone(),
+    );
     tokio::spawn(server.serve(address));
 
     App {
         address: address.to_string(),
         db_pool: connection_pool,
-        secrets,
         redis_con: Arc::new(Mutex::new(redis_con)),
+        dummy_secrets,
     }
 }
