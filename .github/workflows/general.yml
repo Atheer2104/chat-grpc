@@ -30,6 +30,10 @@ jobs:
         # we set the ports to expost (github runner machine container:docker host)
         ports:
           - 5432:5432
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
 
     steps:
       - uses: actions/checkout@v4
