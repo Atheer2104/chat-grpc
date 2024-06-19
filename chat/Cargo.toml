@@ -1,0 +1,39 @@
+[package]
+name = "chat"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+# gRPC framework
+tonic = "0.10"
+# protocol buffer implementation in rust
+prost = "0.12"
+# for well known types in protocol buffer
+prost-types = "0.12"
+# full : use everything in tokio
+tokio = { version = "1.0", features = ["full"] }
+tonic-reflection = "0.10.2"
+tracing = "0.1.40"
+# registry : features is used so we can modify the subscriber that we wiill create
+# env-filter : features is used to set the filter for the logs that will be emitted
+tracing-subscriber = { version = "0.3.18", features = [
+    "registry",
+    "env-filter",
+] }
+tracing-log = "0.2.0"
+tracing-bunyan-formatter = "0.3.9"
+anyhow = "1.0.79"
+config = { version = "0.13.4", default-features = false, features = ["yaml"] }
+serde = { version = "1.0.193", features = ["derive"] }
+chrono = "0.4.38"
+
+[build-dependencies]
+tonic-build = "0.10"
+
+[[bin]]
+name = "chat-server"
+path = "src/bin/server.rs"
+
+[lib]
+path = "src/lib.rs"

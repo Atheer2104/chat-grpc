@@ -10,7 +10,11 @@ use auth::server::build_server;
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
-    let subscriber = get_subscriber("chat-grpc-auth".into(), "info".into(), std::io::stdout);
+    let subscriber = get_subscriber(
+        "Chat-gRPC auth-service".into(),
+        "info".into(),
+        std::io::stdout,
+    );
     init_subscriber(subscriber);
 
     tracing::info!("Reading configuration");
