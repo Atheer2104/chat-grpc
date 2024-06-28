@@ -77,9 +77,5 @@ tonic-build = "0.10"
 name = "auth-server"
 path = "src/bin/server.rs"
 
-[[bin]]
-name = "auth-client"
-path = "src/bin/client.rs"
-
 [lib]
 path = "src/lib.rs"
