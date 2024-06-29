@@ -6,7 +6,7 @@ pub struct Secrets {
 }
 
 pub fn get_secrets() -> Result<Secrets, config::ConfigError> {
-    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/configuration/secrets.yaml");
+    let path = "../secrets.yaml";
 
     let secrets = config::Config::builder()
         .add_source(config::File::new(path, config::FileFormat::Yaml))
