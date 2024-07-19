@@ -36,8 +36,8 @@ impl Tui {
         execute!(stdout(), EnterAlternateScreen, EnableMouseCapture)?;
         enable_raw_mode()?;
 
-        self.terminal.clear()?;
         self.terminal.hide_cursor()?;
+        self.terminal.clear()?;
 
         Ok(())
     }
