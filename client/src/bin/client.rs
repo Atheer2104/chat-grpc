@@ -20,11 +20,11 @@ async fn main() -> Result<()> {
             Event::Key(key_event) => {
                 action(&mut app, key_event).await;
             }
+            Event::Tick => {}
+            Event::Mouse(_) => {}
         }
     }
 
     terminal.exit()?;
-    // ! I know this is how one should not to do it, but the problem is that the task spawned in event handler is still alive even after the main
-    // ! program has finished, thus is does not actually terminate.
-    exit(0);
+    Ok(())
 }
