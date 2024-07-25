@@ -1,11 +1,14 @@
 use anyhow::Result;
-use crossterm::event::{self, Event as CrosstermEvent, KeyEvent};
+use crossterm::event::{self, Event as CrosstermEvent, KeyEvent, MouseEvent};
+use futures::{FutureExt, StreamExt};
 use std::time::Duration;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
 #[derive(Debug)]
 pub enum Event {
+    Tick,
     Key(KeyEvent),
+    Mouse(MouseEvent),
 }
 
 type Sender = UnboundedSender<Event>;
@@ -15,6 +18,7 @@ type Receiver = UnboundedReceiver<Event>;
 pub struct EventHandler {
     sender: Sender,
     receiver: Receiver,
+    handle: tokio::task::JoinHandle<()>,
 }
 
 impl EventHandler {
@@ -24,27 +28,42 @@ impl EventHandler {
 
         let sender = tx.clone();
 
-        tokio::spawn(async move {
+        let handler = tokio::spawn(async move {
+            let mut reader = crossterm::event::EventStream::new();
+            let mut tick = tokio::time::interval(tick_rate);
             loop {
-                if event::poll(tick_rate).expect("Something went wrong when polling for events") {
-                    match event::read().expect("Something went wrong when reading events") {
-                        CrosstermEvent::Key(e) => {
-                            if e.kind == event::KeyEventKind::Press {
-                                sender.send(Event::Key(e))
-                            } else {
-                                Ok(())
-                            }
+                // initiate the tick
+                let tick_delay = tick.tick();
+                let crossterm_event = reader.next().fuse();
+                tokio::select! {
+                  _ = tick_delay => {
+                    sender.send(Event::Tick).unwrap();
+                  }
+
+                  Some(Ok(evt)) = crossterm_event => {
+                    match evt {
+                      CrosstermEvent::Key(key) => {
+                        if key.kind == event::KeyEventKind::Press {
+                          sender.send(Event::Key(key)).unwrap();
                         }
-                        _ => Ok(()),
+                      },
+                      CrosstermEvent::Mouse(mouse) => {
+                        sender.send(Event::Mouse(mouse)).unwrap();
+                      },
+                      CrosstermEvent::Resize(_, _) => {},
+                      CrosstermEvent::FocusLost => {},
+                      CrosstermEvent::FocusGained => {},
+                      CrosstermEvent::Paste(_) => {},
                     }
-                    .expect("Something went wrong when sending events")
-                }
+                  }
+                };
             }
         });
 
         Self {
             sender: tx,
             receiver: rx,
+            handle: handler,
         }
     }
 
