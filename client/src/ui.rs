@@ -1,13 +1,23 @@
-use ratatui::{style::Stylize, widgets::Paragraph, Frame};
+use ratatui::{
+    layout::{Constraint, Direction, Layout},
+    Frame,
+};
 
-use crate::app::App;
+use crate::app::{App, AppView};
 
-pub fn render(f: &mut Frame, app: &App) {
-    let area = f.size();
-    f.render_widget(
-        Paragraph::new("Hello, World! (press 'q' to quit)")
-            .white()
-            .on_magenta(),
-        area,
-    )
+pub fn render(frame: &mut Frame, app: &mut App) {
+    let full_original_framesize = frame.size();
+
+    let main_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Min(1), Constraint::Length(3)])
+        .split(full_original_framesize);
+
+    if app.view == AppView::Home {
+        app.home.render(frame, main_layout[0])
+    }
+
+    app.footer.render(frame, main_layout[1], &app.mode)
+
+    // f.render_widget(Paragraph::new("Hello, World! (press 'q' to quit)"), area)
 }
