@@ -9,19 +9,21 @@ pub enum AppMode {
 #[derive(PartialEq)]
 pub enum AppView {
     Home,
+    Login,
+    Register,
     Chat,
 }
 
-pub struct App {
+pub struct App<'a> {
     pub should_quit: bool,
     pub view: AppView,
     pub mode: AppMode,
-    pub home: Home,
+    pub home: Home<'a>,
     pub footer: Footer,
 }
 
-impl Default for App {
-    fn default() -> App {
+impl<'a> Default for App<'a> {
+    fn default() -> App<'a> {
         Self {
             should_quit: false,
             view: AppView::Home,
@@ -32,8 +34,8 @@ impl Default for App {
     }
 }
 
-impl App {
-    pub fn new() -> App {
+impl<'a> App<'a> {
+    pub fn new() -> App<'a> {
         Self::default()
     }
 
