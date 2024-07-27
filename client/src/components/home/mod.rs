@@ -17,10 +17,17 @@ use tui_big_text::{BigText, PixelSize};
 
 const TITLE: &str = "Chat gRPC";
 
+enum Action {
+    Login,
+    Register,
+    Chat,
+}
+
 pub struct Home<'a> {
     list_items: Vec<String>,
     list_state: ListState,
-    login: Login<'a>,
+    selected_action: Option<Action>,
+    pub login: Login<'a>,
 }
 
 impl<'a> Default for Home<'a> {
@@ -28,6 +35,7 @@ impl<'a> Default for Home<'a> {
         Self {
             list_items: vec!["Login".into(), "Register".into(), "Chat".into()],
             list_state: ListState::default().with_selected(Some(0)),
+            selected_action: None,
             login: Login::new(),
         }
     }
@@ -48,9 +56,14 @@ impl<'a> Home<'a> {
 
     pub fn select(&mut self) {
         if let Some(i) = self.list_state.selected() {
-            println!("choose : {}", self.list_items[i]);
+            // println!("choose : {}", self.list_items[i]);
             if i == 0 {
-                self.login.toggle_login()
+                self.login.toggle_login();
+                self.selected_action = Some(Action::Login);
+            } else if i == 1 {
+                // register actions
+            } else if i == 2 {
+                // chat action
             }
         }
     }

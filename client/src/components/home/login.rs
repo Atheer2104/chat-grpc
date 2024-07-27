@@ -1,15 +1,27 @@
+use std::default;
+
+use crossterm::event::KeyEvent;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::Stylize,
+    symbols::block::HALF,
     widgets::{Block, BorderType, Clear, Padding},
     Frame,
 };
-use tui_prompts::{Prompt, TextPrompt, TextRenderStyle, TextState};
+use tui_prompts::{FocusState, Prompt, State, TextPrompt, TextRenderStyle, TextState};
 
 use crate::ui::centered_rect;
 
+#[derive(Default)]
+enum Field {
+    #[default]
+    Username,
+    Password,
+}
+
 pub struct Login<'a> {
     show_login: bool,
+    current_field: Field,
     username_state: TextState<'a>,
     password_state: TextState<'a>,
 }
@@ -18,7 +30,8 @@ impl<'a> Default for Login<'a> {
     fn default() -> Login<'a> {
         Self {
             show_login: false,
-            username_state: TextState::default(),
+            current_field: Field::default(),
+            username_state: TextState::default().with_focus(FocusState::Focused),
             password_state: TextState::default(),
         }
     }
@@ -35,6 +48,65 @@ impl<'a> Login<'a> {
 
     pub fn show_login(&self) -> bool {
         self.show_login
+    }
+
+    fn is_finished(&self) -> bool {
+        self.username_state.is_finished() && self.password_state.is_finished()
+    }
+
+    pub fn focus_next(&mut self) {
+        self.current_state().blur();
+        self.current_field = self.next_field();
+        self.current_state().focus();
+    }
+
+    pub fn focus_prev(&mut self) {
+        self.current_state().blur();
+        self.current_field = self.prev_field();
+        self.current_state().focus();
+    }
+
+    pub fn submit(&mut self) {
+        // have to validate the value here then mark it as complete
+        self.current_state().complete();
+        if self.current_state().is_finished() && !self.is_finished() {
+            self.current_state().blur();
+            self.current_field = self.next_field();
+            self.current_state().focus();
+        } else {
+            // everything is complete
+            // println!(
+            //     "username: {}, password: {}",
+            //     self.username_state.value(),
+            //     self.password_state.value()
+            // )
+        }
+    }
+
+    pub fn handle_event_current_field(&mut self, key_event: KeyEvent) {
+        let state = self.current_state();
+        state.handle_key_event(key_event);
+    }
+
+    fn next_field(&mut self) -> Field {
+        match self.current_field {
+            Field::Username => Field::Password,
+            Field::Password => Field::Username,
+        }
+    }
+
+    fn prev_field(&mut self) -> Field {
+        match self.current_field {
+            Field::Username => Field::Password,
+            Field::Password => Field::Username,
+        }
+    }
+
+    fn current_state(&mut self) -> &mut TextState<'a> {
+        match self.current_field {
+            Field::Username => &mut self.username_state,
+            Field::Password => &mut self.password_state,
+        }
     }
 
     pub fn render(&mut self, frame: &mut Frame, area: Rect) {
