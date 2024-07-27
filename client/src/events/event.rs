@@ -2,7 +2,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use crate::app::App;
 
-pub async fn action(app: &mut App, key_event: KeyEvent) {
+pub async fn action<'a>(app: &mut App<'a>, key_event: KeyEvent) {
     match app.mode {
         crate::app::AppMode::View => match key_event.code {
             KeyCode::Char('q') => {
