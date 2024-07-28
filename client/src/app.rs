@@ -4,6 +4,7 @@ use crate::components::{Footer, Home};
 pub enum AppMode {
     View,
     Write,
+    Error,
 }
 
 #[derive(PartialEq)]
@@ -43,10 +44,16 @@ impl<'a> App<'a> {
         self.should_quit = true
     }
 
+    pub fn set_error_mode(&mut self) {
+        self.mode = AppMode::Error
+    }
+
     pub fn toggle_mode(&mut self) {
         match self.mode {
             AppMode::View => self.mode = AppMode::Write,
             AppMode::Write => self.mode = AppMode::View,
+            // don't handle error mode
+            _ => {}
         }
     }
 }
