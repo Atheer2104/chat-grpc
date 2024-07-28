@@ -12,6 +12,8 @@ futures-timer = "3.0.3"
 futures = "0.3.30"
 tui-big-text = "0.5.2"
 tui-prompts = "0.3.19"
+unicode-segmentation = "1.10.1"
+tui-popup = "0.4.4"
 
 [[bin]]
 name = "chat-client"
