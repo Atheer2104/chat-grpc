@@ -83,26 +83,31 @@ impl<'a> Home<'a> {
 
         frame.render_widget(title_paragraph, layout[0]);
 
-        let items: Vec<Text> = self
-            .list_items
-            .iter()
-            .map(|item| {
-                Text::from(item.clone())
-                    .centered()
-                    .style(Style::default().bold())
-            })
-            .collect();
+        // we haven't selected an action so the default home page options is shown
+        if self.selected_action.is_none() {
+            let items: Vec<Text> = self
+                .list_items
+                .iter()
+                .map(|item| {
+                    Text::from(item.clone())
+                        .centered()
+                        .style(Style::default().bold())
+                })
+                .collect();
 
-        let list = List::new(items)
-            .style(Style::default().fg(Color::White))
-            .highlight_style(Style::default().reversed())
-            .highlight_spacing(ratatui::widgets::HighlightSpacing::Always)
-            .direction(ListDirection::TopToBottom);
+            let list = List::new(items)
+                .style(Style::default().fg(Color::White))
+                .highlight_style(Style::default().reversed())
+                .highlight_spacing(ratatui::widgets::HighlightSpacing::Always)
+                .direction(ListDirection::TopToBottom);
 
-        frame.render_stateful_widget(list, layout[1], &mut self.list_state);
-
-        if self.login.show_login() {
-            self.login.render(frame, area)
+            frame.render_stateful_widget(list, layout[1], &mut self.list_state);
+        } else {
+            match self.selected_action.as_ref().unwrap() {
+                Action::Login => self.login.render(frame, area),
+                Action::Register => todo!(),
+                Action::Chat => todo!(),
+            }
         }
     }
 }

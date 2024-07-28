@@ -1,14 +1,22 @@
+mod validation;
+
+use tui_popup::Popup;
+pub use validation::*;
+
 use crossterm::event::KeyEvent;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Style, Stylize},
     text::{Line, Span},
-    widgets::{Block, BorderType, Clear, Padding, Paragraph, Wrap},
+    widgets::{Block, BorderType, Clear, Padding, Paragraph},
     Frame,
 };
 use tui_prompts::{FocusState, Prompt, State, TextPrompt, TextRenderStyle, TextState};
 
-use crate::ui::centered_rect;
+use crate::{
+    events::{Event, Sender},
+    ui::centered_rect,
+};
 
 #[derive(Default)]
 enum Field {
@@ -22,6 +30,8 @@ pub struct Login<'a> {
     current_field: Field,
     username_state: TextState<'a>,
     password_state: TextState<'a>,
+    pub show_error_popup: bool,
+    error_description: String,
 }
 
 impl<'a> Default for Login<'a> {
@@ -29,8 +39,10 @@ impl<'a> Default for Login<'a> {
         Self {
             show_login: false,
             current_field: Field::default(),
-            username_state: TextState::default().with_focus(FocusState::Focused),
+            username_state: TextState::default(),
             password_state: TextState::default(),
+            show_error_popup: false,
+            error_description: String::from(""),
         }
     }
 }
@@ -48,6 +60,9 @@ impl<'a> Login<'a> {
         self.show_login
     }
 
+    pub fn show_login_error_popup(&self) -> bool {
+        self.show_error_popup
+    }
     fn is_finished(&self) -> bool {
         self.username_state.is_finished() && self.password_state.is_finished()
     }
@@ -64,20 +79,41 @@ impl<'a> Login<'a> {
         self.current_state().focus();
     }
 
-    pub fn submit(&mut self) {
+    fn focus_current_field(&mut self) {
+        self.current_state().focus();
+    }
+
+    pub fn submit(&mut self, sender: Sender) {
         // have to validate the value here then mark it as complete
-        self.current_state().complete();
-        if self.current_state().is_finished() && !self.is_finished() {
-            self.current_state().blur();
-            self.current_field = self.next_field();
-            self.current_state().focus();
-        } else {
-            // everything is complete
-            // println!(
-            //     "username: {}, password: {}",
-            //     self.username_state.value(),
-            //     self.password_state.value()
-            // )
+
+        let validation_result = match self.current_field {
+            Field::Username => validate_username(self.current_state().value()),
+            Field::Password => validate_password(self.current_state().value()),
+        };
+
+        match validation_result {
+            Ok(_) => {
+                self.show_error_popup = false;
+                self.current_state().complete();
+
+                if self.current_state().is_finished() && !self.is_finished() {
+                    self.focus_next()
+                } else {
+                    // everything is complete
+                    // println!(
+                    //     "username: {}, password: {}",
+                    //     self.username_state.value(),
+                    //     self.password_state.value()
+                    // )
+                }
+            }
+            Err(e) => {
+                self.show_error_popup = true;
+                self.error_description = e;
+                self.current_state().abort();
+                self.current_state().blur();
+                sender.send(Event::Error).unwrap();
+            }
         }
     }
 
@@ -160,5 +196,16 @@ impl<'a> Login<'a> {
         ];
         let password_helper_paragraph = Paragraph::new(password_helper_text);
         frame.render_widget(password_helper_paragraph, layout[4]);
+
+        if self.show_error_popup {
+            let error_popup = Popup::new(self.error_description.as_str())
+                .title("Login Error")
+                .style(Style::default().on_red());
+
+            frame.render_widget(&error_popup, area)
+        } else {
+            // when we have an error we enter error mode which will unfoucus the current field thus we have to focus back the current field
+            self.focus_current_field()
+        }
     }
 }
