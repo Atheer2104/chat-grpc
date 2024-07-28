@@ -27,15 +27,22 @@ impl Footer {
                 vec![
                     Span::styled(" VIEW ", Style::default().bg(Color::Blue).bold()),
                     Span::styled(" Q or Ctrl + c: Quit.", Style::default()),
-                    Span::styled(" W: Write Mode.", Style::default()),
+                    // Span::styled(" W: Write Mode.", Style::default()),
                     Span::styled(" Use ↓↑ to move", Style::default()),
                 ]
             }
             AppMode::Write => {
                 vec![
-                    Span::styled(" WRITE ", Style::default().bg(Color::Red).bold()),
-                    Span::styled(" Esc: go back to view mode. ", Style::default()),
-                    Span::styled("Ctrl + c : Quit", Style::default()),
+                    Span::styled(" WRITE ", Style::default().bg(Color::Green).bold()),
+                    // Span::styled(" Esc: go back to view mode. ", Style::default()),
+                    Span::styled(" Ctrl + c : Quit", Style::default()),
+                ]
+            }
+            AppMode::Error => {
+                vec![
+                    Span::styled(" ERROR ", Style::default().bg(Color::Red).bold()),
+                    Span::styled(" Enter: to dismiss error.", Style::default()),
+                    Span::styled(" Q or Ctrl + c: Quit.", Style::default()),
                 ]
             }
         };
