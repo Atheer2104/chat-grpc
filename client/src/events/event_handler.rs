@@ -9,14 +9,15 @@ pub enum Event {
     Tick,
     Key(KeyEvent),
     Mouse(MouseEvent),
+    Error,
 }
 
-type Sender = UnboundedSender<Event>;
-type Receiver = UnboundedReceiver<Event>;
+pub type Sender = UnboundedSender<Event>;
+pub type Receiver = UnboundedReceiver<Event>;
 
 #[derive(Debug)]
 pub struct EventHandler {
-    sender: Sender,
+    pub sender: Sender,
     receiver: Receiver,
     handle: tokio::task::JoinHandle<()>,
 }
