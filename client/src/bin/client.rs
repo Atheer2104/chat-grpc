@@ -18,10 +18,11 @@ async fn main() -> Result<()> {
 
         match events.next().await? {
             Event::Key(key_event) => {
-                action(&mut app, key_event).await;
+                action(&mut app, key_event, events.sender.clone()).await;
             }
             Event::Tick => {}
             Event::Mouse(_) => {}
+            Event::Error => app.set_error_mode(),
         }
     }
 
