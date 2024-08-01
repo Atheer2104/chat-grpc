@@ -1,8 +1,10 @@
 mod login;
 mod register;
+mod validation;
 
 pub use login::*;
 pub use register::*;
+pub use validation::*;
 
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::Stylize;
@@ -17,7 +19,7 @@ use tui_big_text::{BigText, PixelSize};
 
 const TITLE: &str = "Chat gRPC";
 
-enum Action {
+pub enum Action {
     Login,
     Register,
     Chat,
@@ -28,6 +30,7 @@ pub struct Home<'a> {
     list_state: ListState,
     selected_action: Option<Action>,
     pub login: Login<'a>,
+    pub register: Register<'a>,
 }
 
 impl<'a> Default for Home<'a> {
@@ -37,6 +40,7 @@ impl<'a> Default for Home<'a> {
             list_state: ListState::default().with_selected(Some(0)),
             selected_action: None,
             login: Login::new(),
+            register: Register::new(),
         }
     }
 }
@@ -54,14 +58,18 @@ impl<'a> Home<'a> {
         self.list_state.select_previous();
     }
 
+    pub fn selected_action(&self) -> Option<&Action> {
+        self.selected_action.as_ref()
+    }
+
     pub fn select(&mut self) {
         if let Some(i) = self.list_state.selected() {
             // println!("choose : {}", self.list_items[i]);
             if i == 0 {
-                self.login.toggle_login();
                 self.selected_action = Some(Action::Login);
             } else if i == 1 {
                 // register actions
+                self.selected_action = Some(Action::Register)
             } else if i == 2 {
                 // chat action
             }
@@ -105,7 +113,7 @@ impl<'a> Home<'a> {
         } else {
             match self.selected_action.as_ref().unwrap() {
                 Action::Login => self.login.render(frame, area),
-                Action::Register => todo!(),
+                Action::Register => self.register.render(frame, area),
                 Action::Chat => todo!(),
             }
         }

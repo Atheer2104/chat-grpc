@@ -1,6 +1,9 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use crate::app::{App, AppMode};
+use crate::{
+    app::{App, AppMode},
+    components::Action,
+};
 
 use super::Sender;
 
@@ -27,20 +30,56 @@ pub async fn action<'a>(app: &mut App<'a>, key_event: KeyEvent, sender: Sender) 
         },
         crate::app::AppMode::Write => match key_event.code {
             // KeyCode::Esc => app.toggle_mode(),
-            KeyCode::Enter => app.home.login.submit(sender),
-            KeyCode::Tab => app.home.login.focus_next(),
-            KeyCode::BackTab => app.home.login.focus_prev(),
-            KeyCode::Char('c') | KeyCode::Char('C') => {
-                if key_event.modifiers == KeyModifiers::CONTROL {
-                    app.exit()
+            KeyCode::Enter => {
+                if let Some(action) = app.home.selected_action() {
+                    match action {
+                        Action::Login => app.home.login.submit(sender),
+                        Action::Register => app.home.register.submit(sender),
+                        Action::Chat => todo!(),
+                    }
                 }
             }
+
+            KeyCode::Tab => {
+                if let Some(action) = app.home.selected_action() {
+                    match action {
+                        Action::Login => app.home.login.focus_next(),
+                        Action::Register => app.home.register.focus_next(),
+                        Action::Chat => todo!(),
+                    }
+                }
+            }
+            KeyCode::BackTab => {
+                if let Some(action) = app.home.selected_action() {
+                    match action {
+                        Action::Login => app.home.login.focus_prev(),
+                        Action::Register => app.home.register.focus_prev(),
+                        Action::Chat => todo!(),
+                    }
+                }
+            }
+
+            KeyCode::Esc => app.exit(),
             // we are writing
-            _ => app.home.login.handle_event_current_field(key_event),
+            _ => {
+                if let Some(action) = app.home.selected_action() {
+                    match action {
+                        Action::Login => app.home.login.handle_event_current_field(key_event),
+                        Action::Register => app.home.register.handle_event_current_field(key_event),
+                        Action::Chat => todo!(),
+                    }
+                }
+            }
         },
         crate::app::AppMode::Error => match key_event.code {
             KeyCode::Enter | KeyCode::Esc => {
-                app.home.login.show_error_popup = false;
+                if let Some(action) = app.home.selected_action() {
+                    match action {
+                        Action::Login => app.home.login.show_error_popup = false,
+                        Action::Register => app.home.register.show_error_popup = false,
+                        Action::Chat => todo!(),
+                    }
+                }
                 app.mode = AppMode::Write;
             }
             KeyCode::Char('q') => {

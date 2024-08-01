@@ -1,4 +1,5 @@
 use unicode_segmentation::UnicodeSegmentation;
+use validator::validate_email;
 
 // username consts
 const FORBIDDEN_CHARACTERS: [char; 9] = ['/', '(', ')', '"', '<', '>', '\\', '{', '}'];
@@ -7,6 +8,9 @@ const MAX_USERNAME_LENGTH: u8 = 255;
 // password consts
 const MAX_PASSWORD_LENGTH: u8 = 255;
 const MIN_PASSWORD_LENGTH: u8 = 8;
+
+// names consts
+const MAX_NAME_LENGTH: u8 = 255;
 
 pub fn validate_username(username: &str) -> Result<(), String> {
     // is_empty_or_whitespace
@@ -55,6 +59,39 @@ pub fn validate_password(password: &str) -> Result<(), String> {
             "Password is longer than {} chars",
             MAX_PASSWORD_LENGTH
         ));
+    }
+
+    Ok(())
+}
+
+pub fn parse_email(s: &str) -> Result<(), String> {
+    if validate_email(s) {
+        Ok(())
+    } else {
+        return Err("Email is not valid".into());
+    }
+}
+
+pub fn validate_name(s: &str, quantity: &str) -> Result<(), String> {
+    // is_empty_or_whitespace
+    if s.trim().is_empty() {
+        return Err(format!(
+            "{} is empty or contains too many whitespaces",
+            quantity
+        ));
+    }
+
+    // is_too_long
+    if s.graphemes(true).count() > MAX_NAME_LENGTH.into() {
+        return Err(format!(
+            "{} is longer than {} chars",
+            quantity, MAX_NAME_LENGTH
+        ));
+    }
+
+    // is_contain_numbers
+    if s.chars().any(|c| c.is_numeric()) {
+        return Err(format!("{} contains numbers", quantity));
     }
 
     Ok(())
