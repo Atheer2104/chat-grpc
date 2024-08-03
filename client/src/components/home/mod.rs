@@ -62,6 +62,10 @@ impl<'a> Home<'a> {
         self.selected_action.as_ref()
     }
 
+    pub fn reset_action(&mut self) {
+        self.selected_action = None
+    }
+
     pub fn select(&mut self) {
         if let Some(i) = self.list_state.selected() {
             // println!("choose : {}", self.list_items[i]);

@@ -1,3 +1,4 @@
+use auth::authentication::LoginRequest;
 use tui_popup::Popup;
 
 use crossterm::event::KeyEvent;
@@ -30,7 +31,7 @@ pub struct Login<'a> {
     username_state: TextState<'a>,
     password_state: TextState<'a>,
     pub show_error_popup: bool,
-    error_description: String,
+    pub error_description: String,
 }
 
 impl<'a> Default for Login<'a> {
@@ -59,8 +60,17 @@ impl<'a> Login<'a> {
         self.show_error_popup
     }
 
-    fn is_finished(&self) -> bool {
+    pub fn is_finished(&self) -> bool {
         self.username_state.is_finished() && self.password_state.is_finished()
+    }
+
+    pub fn get_login_request(&self) -> LoginRequest {
+        let username = self.username_state.value();
+        let password = self.password_state.value();
+        LoginRequest {
+            username: username.into(),
+            password: password.into(),
+        }
     }
 
     pub fn focus_next(&mut self) {
@@ -100,6 +110,7 @@ impl<'a> Login<'a> {
                     self.focus_next()
                 } else {
                     // everything is complete
+                    // println!("all done");
                     // println!(
                     //     "username: {}, password: {}",
                     //     self.username_state.value(),

@@ -5,7 +5,7 @@ use crate::{
     components::Action,
 };
 
-use super::Sender;
+use super::{Event, Sender};
 
 pub async fn action<'a>(app: &mut App<'a>, key_event: KeyEvent, sender: Sender) {
     match app.mode {
@@ -33,7 +33,26 @@ pub async fn action<'a>(app: &mut App<'a>, key_event: KeyEvent, sender: Sender) 
             KeyCode::Enter => {
                 if let Some(action) = app.home.selected_action() {
                     match action {
-                        Action::Login => app.home.login.submit(sender),
+                        Action::Login => {
+                            app.home.login.submit(sender);
+                            match app.home.login.is_finished() {
+                                true => {
+                                    let login_request = app.home.login.get_login_request();
+                                    match app.authapi.login(login_request).await {
+                                        Ok(token) => {
+                                            app.set_access_token(token.access_token);
+                                            // println!("access token: {}", app.access_token)
+                                        }
+                                        Err(error_msg) => {
+                                            app.home.login.show_error_popup = true;
+                                            app.home.login.error_description = error_msg;
+                                            app.set_error_mode();
+                                        }
+                                    };
+                                }
+                                false => {}
+                            }
+                        }
                         Action::Register => app.home.register.submit(sender),
                         Action::Chat => todo!(),
                     }
@@ -59,7 +78,10 @@ pub async fn action<'a>(app: &mut App<'a>, key_event: KeyEvent, sender: Sender) 
                 }
             }
 
-            KeyCode::Esc => app.exit(),
+            KeyCode::Esc => {
+                app.home.reset_action();
+                app.toggle_mode();
+            }
             // we are writing
             _ => {
                 if let Some(action) = app.home.selected_action() {

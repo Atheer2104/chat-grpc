@@ -393,11 +393,13 @@ name = "client"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "auth",
  "crossterm",
  "futures",
  "futures-timer",
  "ratatui",
  "tokio",
+ "tonic",
  "tui-big-text",
  "tui-popup",
  "tui-prompts",

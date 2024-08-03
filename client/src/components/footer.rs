@@ -35,8 +35,9 @@ impl Footer {
                 vec![
                     Span::styled(" WRITE ", Style::default().bg(Color::Green).bold()),
                     // Span::styled(" Esc: go back to view mode. ", Style::default()),
-                    Span::styled(" Esc : Quit.", Style::default()),
+                    Span::styled(" Esc : Go Back.", Style::default()),
                     Span::styled(" Enter : Submit.", Style::default()),
+                    // Span::styled(" Ctrl: Quit.", Style::default()),
                 ]
             }
             AppMode::Error => {

@@ -10,7 +10,7 @@ async fn main() -> Result<()> {
 
     let mut events = EventHandler::new(16);
 
-    let mut app = App::new();
+    let mut app = App::new().await;
 
     // main program loop
     while !app.should_quit {

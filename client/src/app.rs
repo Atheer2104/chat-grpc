@@ -1,4 +1,7 @@
-use crate::components::{Footer, Home};
+use crate::{
+    api::AuthApi,
+    components::{Footer, Home},
+};
 
 #[derive(PartialEq)]
 pub enum AppMode {
@@ -21,23 +24,21 @@ pub struct App<'a> {
     pub mode: AppMode,
     pub home: Home<'a>,
     pub footer: Footer,
+    pub authapi: AuthApi,
+    pub access_token: String,
 }
 
-impl<'a> Default for App<'a> {
-    fn default() -> App<'a> {
+impl<'a> App<'a> {
+    pub async fn new() -> App<'a> {
         Self {
             should_quit: false,
             view: AppView::Home,
             mode: AppMode::View,
             home: Home::new(),
             footer: Footer::new(),
+            authapi: AuthApi::new().await,
+            access_token: String::new(),
         }
-    }
-}
-
-impl<'a> App<'a> {
-    pub fn new() -> App<'a> {
-        Self::default()
     }
 
     pub fn exit(&mut self) {
@@ -46,6 +47,10 @@ impl<'a> App<'a> {
 
     pub fn set_error_mode(&mut self) {
         self.mode = AppMode::Error
+    }
+
+    pub fn set_access_token(&mut self, access_token: String) {
+        self.access_token = access_token;
     }
 
     pub fn toggle_mode(&mut self) {
