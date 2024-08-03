@@ -1,3 +1,4 @@
+use auth::authentication::RegisterRequest;
 use crossterm::event::KeyEvent;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
@@ -33,7 +34,7 @@ pub struct Register<'a> {
     email_state: TextState<'a>,
     password_state: TextState<'a>,
     pub show_error_popup: bool,
-    error_description: String,
+    pub error_description: String,
 }
 
 impl<'a> Default for Register<'a> {
@@ -61,12 +62,22 @@ impl<'a> Register<'a> {
         self.show_register = !self.show_register
     }
 
-    fn is_finished(&self) -> bool {
+    pub fn is_finished(&self) -> bool {
         self.firstname_state.is_finished()
             && self.lastname_state.is_finished()
             && self.username_state.is_finished()
             && self.email_state.is_finished()
             && self.password_state.is_finished()
+    }
+
+    pub fn get_register_request(&self) -> RegisterRequest {
+        RegisterRequest {
+            firstname: self.firstname_state.value().into(),
+            lastname: self.lastname_state.value().into(),
+            username: self.username_state.value().into(),
+            email: self.email_state.value().into(),
+            password: self.password_state.value().into(),
+        }
     }
 
     fn focus_current_field(&mut self) {

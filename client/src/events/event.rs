@@ -53,7 +53,26 @@ pub async fn action<'a>(app: &mut App<'a>, key_event: KeyEvent, sender: Sender) 
                                 false => {}
                             }
                         }
-                        Action::Register => app.home.register.submit(sender),
+                        Action::Register => {
+                            app.home.register.submit(sender);
+                            match app.home.register.is_finished() {
+                                true => {
+                                    let register_request = app.home.register.get_register_request();
+                                    match app.authapi.register(register_request).await {
+                                        Ok(token) => {
+                                            app.set_access_token(token.access_token);
+                                            println!("access token: {}", app.access_token)
+                                        }
+                                        Err(error_msg) => {
+                                            app.home.register.show_error_popup = true;
+                                            app.home.register.error_description = error_msg;
+                                            app.set_error_mode();
+                                        }
+                                    }
+                                }
+                                false => {}
+                            }
+                        }
                         Action::Chat => todo!(),
                     }
                 }
