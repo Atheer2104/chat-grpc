@@ -19,7 +19,7 @@ pub type Receiver = UnboundedReceiver<Event>;
 pub struct EventHandler {
     pub sender: Sender,
     receiver: Receiver,
-    handle: tokio::task::JoinHandle<()>,
+    _handle: tokio::task::JoinHandle<()>,
 }
 
 impl EventHandler {
@@ -64,7 +64,7 @@ impl EventHandler {
         Self {
             sender: tx,
             receiver: rx,
-            handle: handler,
+            _handle: handler,
         }
     }
 

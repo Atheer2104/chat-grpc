@@ -126,7 +126,7 @@ impl<'a> Register<'a> {
                 self.error_description = e;
                 self.current_state().abort();
                 self.current_state().blur();
-                sender.send(Event::Error);
+                let _ = sender.send(Event::Error);
             }
         }
     }

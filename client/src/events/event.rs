@@ -5,7 +5,7 @@ use crate::{
     components::Action,
 };
 
-use super::{Event, Sender};
+use super::Sender;
 
 pub async fn action<'a>(app: &mut App<'a>, key_event: KeyEvent, sender: Sender) {
     match app.mode {

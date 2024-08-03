@@ -68,7 +68,7 @@ pub fn parse_email(s: &str) -> Result<(), String> {
     if validate_email(s) {
         Ok(())
     } else {
-        return Err("Email is not valid".into());
+        Err("Email is not valid".into())
     }
 }
 
