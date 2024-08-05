@@ -6,8 +6,9 @@ use ratatui::{
     Frame,
 };
 
-use crate::app::AppMode;
+use crate::app::{App, AppMode};
 
+#[derive(Clone)]
 pub struct Footer {}
 
 impl Default for Footer {
@@ -21,8 +22,8 @@ impl Footer {
         Self::default()
     }
 
-    pub fn render(&self, frame: &mut Frame, footer_area: Rect, app_mode: &AppMode) {
-        let footer_text = match app_mode {
+    pub fn render(&self, frame: &mut Frame, footer_area: Rect, app: &App) {
+        let footer_text = match app.mode {
             AppMode::View => {
                 vec![
                     Span::styled(" VIEW ", Style::default().bg(Color::Blue).bold()),
@@ -32,13 +33,19 @@ impl Footer {
                 ]
             }
             AppMode::Write => {
-                vec![
+                let mut text = vec![
                     Span::styled(" WRITE ", Style::default().bg(Color::Green).bold()),
                     // Span::styled(" Esc: go back to view mode. ", Style::default()),
                     Span::styled(" Esc : Go Back.", Style::default()),
                     Span::styled(" Enter : Submit.", Style::default()),
                     // Span::styled(" Ctrl: Quit.", Style::default()),
-                ]
+                ];
+
+                if app.home.chat.chat_shown() {
+                    text.push(Span::styled(" Use ↓↑ to Scroll. ", Style::default()))
+                }
+
+                text
             }
             AppMode::Error => {
                 vec![

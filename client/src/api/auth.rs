@@ -3,6 +3,7 @@ use tonic::{transport::Channel, Request};
 
 const ADDRESS: &str = "http://[::1]:8000";
 
+#[derive(Clone)]
 pub struct AuthApi {
     client: AuthClient<Channel>,
 }

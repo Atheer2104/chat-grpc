@@ -1,3 +1,4 @@
+use chat::chat::ChatMessage;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use crate::{
@@ -73,7 +74,21 @@ pub async fn action<'a>(app: &mut App<'a>, key_event: KeyEvent, sender: Sender) 
                                 false => {}
                             }
                         }
-                        Action::Chat => todo!(),
+                        Action::Chat => {
+                            let message = app.home.chat.get_message();
+                            let chat_message = ChatMessage {
+                                username: "atheer2104".into(),
+                                message: message.into(),
+                                timestamp: None,
+                            };
+
+                            let _ = {
+                                let mut app_clone = app.clone();
+                                tokio::spawn(
+                                    async move { app_clone.chatapi.chat(chat_message).await },
+                                );
+                            };
+                        }
                     }
                 }
             }
@@ -101,13 +116,39 @@ pub async fn action<'a>(app: &mut App<'a>, key_event: KeyEvent, sender: Sender) 
                 app.home.reset_action();
                 app.toggle_mode();
             }
+            KeyCode::Up => {
+                if let Some(action) = app.home.selected_action() {
+                    match action {
+                        Action::Login => {}
+                        Action::Register => {}
+                        Action::Chat => {
+                            // println!("scrolling up");
+                            app.home.chat.vertical_scroll =
+                                app.home.chat.vertical_scroll.saturating_add(1);
+                        }
+                    }
+                }
+            }
+            KeyCode::Down => {
+                if let Some(action) = app.home.selected_action() {
+                    match action {
+                        Action::Login => {}
+                        Action::Register => {}
+                        Action::Chat => {
+                            // println!("scrolling down");
+                            app.home.chat.vertical_scroll =
+                                app.home.chat.vertical_scroll.saturating_sub(1);
+                        }
+                    }
+                }
+            }
             // we are writing
             _ => {
                 if let Some(action) = app.home.selected_action() {
                     match action {
                         Action::Login => app.home.login.handle_event_current_field(key_event),
                         Action::Register => app.home.register.handle_event_current_field(key_event),
-                        Action::Chat => todo!(),
+                        Action::Chat => app.home.chat.handle_event(key_event),
                     }
                 }
             }

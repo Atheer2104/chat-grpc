@@ -1,7 +1,9 @@
+mod chat;
 mod login;
 mod register;
 mod validation;
 
+pub use chat::*;
 pub use login::*;
 pub use register::*;
 pub use validation::*;
@@ -19,18 +21,21 @@ use tui_big_text::{BigText, PixelSize};
 
 const TITLE: &str = "Chat gRPC";
 
+#[derive(Clone)]
 pub enum Action {
     Login,
     Register,
     Chat,
 }
 
+#[derive(Clone)]
 pub struct Home<'a> {
     list_items: Vec<String>,
     list_state: ListState,
     selected_action: Option<Action>,
     pub login: Login<'a>,
     pub register: Register<'a>,
+    pub chat: Chat<'a>,
 }
 
 impl<'a> Default for Home<'a> {
@@ -41,6 +46,7 @@ impl<'a> Default for Home<'a> {
             selected_action: None,
             login: Login::new(),
             register: Register::new(),
+            chat: Chat::new(),
         }
     }
 }
@@ -73,9 +79,11 @@ impl<'a> Home<'a> {
                 self.selected_action = Some(Action::Login);
             } else if i == 1 {
                 // register actions
-                self.selected_action = Some(Action::Register)
+                self.selected_action = Some(Action::Register);
             } else if i == 2 {
                 // chat action
+                self.selected_action = Some(Action::Chat);
+                self.chat.toggle_chat();
             }
         }
     }
@@ -118,7 +126,7 @@ impl<'a> Home<'a> {
             match self.selected_action.as_ref().unwrap() {
                 Action::Login => self.login.render(frame, area),
                 Action::Register => self.register.render(frame, area),
-                Action::Chat => todo!(),
+                Action::Chat => self.chat.render(frame, area),
             }
         }
     }

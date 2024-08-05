@@ -17,6 +17,7 @@ use crate::{
 
 use super::{parse_email, validate_name, validate_password, validate_username};
 
+#[derive(Clone)]
 enum Field {
     Firstname,
     Lastname,
@@ -25,6 +26,7 @@ enum Field {
     Password,
 }
 
+#[derive(Clone)]
 pub struct Register<'a> {
     show_register: bool,
     current_field: Field,
