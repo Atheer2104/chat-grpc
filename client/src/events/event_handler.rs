@@ -1,4 +1,5 @@
 use anyhow::Result;
+use chat::chat::ChatMessage;
 use crossterm::event::{self, Event as CrosstermEvent, KeyEvent, MouseEvent};
 use futures::{FutureExt, StreamExt};
 use std::time::Duration;
@@ -10,6 +11,10 @@ pub enum Event {
     Key(KeyEvent),
     Mouse(MouseEvent),
     Error,
+    Login,
+    Register,
+    Chat,
+    Message(ChatMessage),
 }
 
 pub type Sender = UnboundedSender<Event>;

@@ -1,16 +1,20 @@
+use std::sync::Arc;
+
 use anyhow::Result;
 use chat::chat::{chatting_client::ChattingClient, ChatMessage};
+use ratatui::symbols::block::HALF;
+use std::sync::Mutex;
 use tonic::{
-    body::BoxBody,
     metadata::MetadataValue,
     service::{interceptor::InterceptedService, Interceptor},
     transport::Channel,
     Request, Status,
 };
 
+use crate::events::{Event, Sender};
+
 const ADDRESS: &str = "http://[::1]:8001";
 
-#[derive(Clone)]
 struct MyInterceptor {
     access_token: String,
 }
@@ -28,9 +32,9 @@ impl Interceptor for MyInterceptor {
     }
 }
 
-#[derive(Clone)]
 pub struct ChatApi {
     client: ChattingClient<InterceptedService<Channel, MyInterceptor>>,
+    spawn_inbound_stream_task: bool,
 }
 
 impl ChatApi {
@@ -40,17 +44,16 @@ impl ChatApi {
             .await
             .expect("Failed to connect to chat service");
 
-        // let token: MetadataValue<_> = format!("Bearer {}", access_token)
-        //     .parse()
-        //     .expect("Failed to create access token");
-
         let client: ChattingClient<InterceptedService<Channel, MyInterceptor>> =
             ChattingClient::with_interceptor(channel, MyInterceptor { access_token });
 
-        Self { client }
+        Self {
+            client,
+            spawn_inbound_stream_task: false,
+        }
     }
 
-    pub async fn chat(&mut self, chat_message: ChatMessage) -> Result<()> {
+    pub async fn chat(&mut self, chat_message: ChatMessage, sender: Sender) -> Result<()> {
         let outbound = async_stream::stream! {
             yield chat_message
         };
@@ -58,8 +61,14 @@ impl ChatApi {
         let response = self.client.chat(Request::new(outbound)).await?;
         let mut inbound = response.into_inner();
 
-        while let Some(message) = inbound.message().await? {
-            println!("Received Message: {:?}", message);
+        if !self.spawn_inbound_stream_task {
+            self.spawn_inbound_stream_task = true;
+            tokio::spawn(async move {
+                while let Some(message) = inbound.message().await.expect("Failed to read") {
+                    // println!("Received Message: {:?}", message);
+                    let _ = sender.send(Event::Message(message));
+                }
+            });
         }
 
         Ok(())

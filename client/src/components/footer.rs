@@ -8,7 +8,6 @@ use ratatui::{
 
 use crate::app::{App, AppMode};
 
-#[derive(Clone)]
 pub struct Footer {}
 
 impl Default for Footer {

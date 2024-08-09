@@ -21,14 +21,12 @@ use tui_big_text::{BigText, PixelSize};
 
 const TITLE: &str = "Chat gRPC";
 
-#[derive(Clone)]
 pub enum Action {
     Login,
     Register,
     Chat,
 }
 
-#[derive(Clone)]
 pub struct Home<'a> {
     list_items: Vec<String>,
     list_state: ListState,

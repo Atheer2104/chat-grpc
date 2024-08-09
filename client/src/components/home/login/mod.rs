@@ -18,14 +18,13 @@ use crate::{
 
 use super::{validate_password, validate_username};
 
-#[derive(Default, Clone)]
+#[derive(Default)]
 enum Field {
     #[default]
     Username,
     Password,
 }
 
-#[derive(Clone)]
 pub struct Login<'a> {
     show_login: bool,
     current_field: Field,

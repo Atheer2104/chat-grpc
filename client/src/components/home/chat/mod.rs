@@ -1,19 +1,15 @@
-use std::hash;
-
-use crossterm::{event::KeyEvent, style::style};
+use crossterm::event::KeyEvent;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Margin, Rect},
-    style::{Style, Stylize},
-    text::{Line, Span, Text},
+    style::Style,
+    text::{Line, Span},
     widgets::{
-        Block, BorderType, Borders, Clear, Padding, Paragraph, Scrollbar, ScrollbarOrientation,
-        ScrollbarState, Wrap,
+        Block, Borders, Clear, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap,
     },
     Frame,
 };
 use tui_prompts::{FocusState, Prompt, State, TextPrompt, TextState};
 
-#[derive(Clone)]
 pub struct Chat<'a> {
     show_chat: bool,
     message_prompt_state: TextState<'a>,

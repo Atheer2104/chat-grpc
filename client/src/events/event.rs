@@ -6,7 +6,7 @@ use crate::{
     components::Action,
 };
 
-use super::Sender;
+use super::{Event, Sender};
 
 pub async fn action<'a>(app: &mut App<'a>, key_event: KeyEvent, sender: Sender) {
     match app.mode {
@@ -35,59 +35,26 @@ pub async fn action<'a>(app: &mut App<'a>, key_event: KeyEvent, sender: Sender) 
                 if let Some(action) = app.home.selected_action() {
                     match action {
                         Action::Login => {
-                            app.home.login.submit(sender);
+                            app.home.login.submit(sender.clone());
                             match app.home.login.is_finished() {
                                 true => {
-                                    let login_request = app.home.login.get_login_request();
-                                    match app.authapi.login(login_request).await {
-                                        Ok(token) => {
-                                            app.set_access_token(token.access_token);
-                                            // println!("access token: {}", app.access_token)
-                                        }
-                                        Err(error_msg) => {
-                                            app.home.login.show_error_popup = true;
-                                            app.home.login.error_description = error_msg;
-                                            app.set_error_mode();
-                                        }
-                                    };
+                                    let _ = sender.send(Event::Login);
                                 }
                                 false => {}
                             }
                         }
                         Action::Register => {
-                            app.home.register.submit(sender);
+                            app.home.register.submit(sender.clone());
                             match app.home.register.is_finished() {
                                 true => {
-                                    let register_request = app.home.register.get_register_request();
-                                    match app.authapi.register(register_request).await {
-                                        Ok(token) => {
-                                            app.set_access_token(token.access_token);
-                                            println!("access token: {}", app.access_token)
-                                        }
-                                        Err(error_msg) => {
-                                            app.home.register.show_error_popup = true;
-                                            app.home.register.error_description = error_msg;
-                                            app.set_error_mode();
-                                        }
-                                    }
+                                    let _ = sender.send(Event::Register);
                                 }
                                 false => {}
                             }
                         }
                         Action::Chat => {
-                            let message = app.home.chat.get_message();
-                            let chat_message = ChatMessage {
-                                username: "atheer2104".into(),
-                                message: message.into(),
-                                timestamp: None,
-                            };
-
-                            let _ = {
-                                let mut app_clone = app.clone();
-                                tokio::spawn(
-                                    async move { app_clone.chatapi.chat(chat_message).await },
-                                );
-                            };
+                            // println!("sending chat event");
+                            let _ = sender.send(Event::Chat);
                         }
                     }
                 }

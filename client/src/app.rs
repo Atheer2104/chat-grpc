@@ -1,16 +1,15 @@
-use crate::{
-    api::{AuthApi, ChatApi},
-    components::{Footer, Home},
-};
+use chat::chat::ChatMessage;
 
-#[derive(PartialEq, Clone)]
+use crate::components::{Footer, Home};
+
+#[derive(PartialEq)]
 pub enum AppMode {
     View,
     Write,
     Error,
 }
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq)]
 pub enum AppView {
     Home,
     Login,
@@ -18,15 +17,12 @@ pub enum AppView {
     Chat,
 }
 
-#[derive(Clone)]
 pub struct App<'a> {
     pub should_quit: bool,
     pub view: AppView,
     pub mode: AppMode,
     pub home: Home<'a>,
     pub footer: Footer,
-    pub authapi: AuthApi,
-    pub chatapi: ChatApi,
     pub access_token: String,
 }
 
@@ -38,9 +34,7 @@ impl<'a> App<'a> {
             mode: AppMode::View,
             home: Home::new(),
             footer: Footer::new(),
-            authapi: AuthApi::new().await,
             access_token: String::from("eyJhbGciOiJIUzUxMiJ9.eyJlbWFpbCI6InRlc3QyNkBnbWFpbCIsImV4cCI6IjE3MjMzOTk5NDYiLCJpYXQiOiIxNzIyNzk1MTQ2IiwiaXNzIjoiQ2hhdC1nUlBDIiwic3ViIjoiYXV0aCB0b2tlbiIsInVzZXJfaWQiOiIyNCIsInVzZXJuYW1lIjoidGVzdDI2In0.2API8Y6AVP4w4oHtNnjpWxgvU45PQUUnl6ak4iz0L5dRdWDWZcSI1CThUtHfxfuRfk1Fs8Gc8_ItjvSAQ2pHIQ"),
-            chatapi: ChatApi::new(String::from("eyJhbGciOiJIUzUxMiJ9.eyJlbWFpbCI6InRlc3QyNkBnbWFpbCIsImV4cCI6IjE3MjMzOTk5NDYiLCJpYXQiOiIxNzIyNzk1MTQ2IiwiaXNzIjoiQ2hhdC1nUlBDIiwic3ViIjoiYXV0aCB0b2tlbiIsInVzZXJfaWQiOiIyNCIsInVzZXJuYW1lIjoidGVzdDI2In0.2API8Y6AVP4w4oHtNnjpWxgvU45PQUUnl6ak4iz0L5dRdWDWZcSI1CThUtHfxfuRfk1Fs8Gc8_ItjvSAQ2pHIQ")).await,
         }
     }
 
