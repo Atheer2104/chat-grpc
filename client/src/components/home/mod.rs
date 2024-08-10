@@ -39,7 +39,7 @@ pub struct Home<'a> {
 impl<'a> Default for Home<'a> {
     fn default() -> Home<'a> {
         Self {
-            list_items: vec!["Login".into(), "Register".into(), "Chat".into()],
+            list_items: vec!["Login".into(), "Register".into()],
             list_state: ListState::default().with_selected(Some(0)),
             selected_action: None,
             login: Login::new(),
@@ -67,7 +67,13 @@ impl<'a> Home<'a> {
     }
 
     pub fn reset_action(&mut self) {
-        self.selected_action = None
+        self.selected_action = None;
+        self.login.reset_textfields_state();
+        self.register.reset_textfields_state();
+    }
+
+    pub fn set_action_to_chat(&mut self) {
+        self.selected_action = Some(Action::Chat)
     }
 
     pub fn select(&mut self) {
@@ -78,10 +84,6 @@ impl<'a> Home<'a> {
             } else if i == 1 {
                 // register actions
                 self.selected_action = Some(Action::Register);
-            } else if i == 2 {
-                // chat action
-                self.selected_action = Some(Action::Chat);
-                self.chat.toggle_chat();
             }
         }
     }

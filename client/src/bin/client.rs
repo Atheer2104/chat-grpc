@@ -1,5 +1,3 @@
-use std::process::exit;
-
 use anyhow::Result;
 use chat::chat::ChatMessage;
 use client::{
@@ -8,6 +6,8 @@ use client::{
     events::*,
     tui::Tui,
 };
+use random_color::RandomColor;
+use ratatui::style::Color;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -19,7 +19,7 @@ async fn main() -> Result<()> {
     let mut app = App::new().await;
 
     let mut authapi = AuthApi::new().await;
-    let mut chatapi = ChatApi::new(String::from("eyJhbGciOiJIUzUxMiJ9.eyJlbWFpbCI6InRlc3QyNkBnbWFpbCIsImV4cCI6IjE3MjMzOTk5NDYiLCJpYXQiOiIxNzIyNzk1MTQ2IiwiaXNzIjoiQ2hhdC1nUlBDIiwic3ViIjoiYXV0aCB0b2tlbiIsInVzZXJfaWQiOiIyNCIsInVzZXJuYW1lIjoidGVzdDI2In0.2API8Y6AVP4w4oHtNnjpWxgvU45PQUUnl6ak4iz0L5dRdWDWZcSI1CThUtHfxfuRfk1Fs8Gc8_ItjvSAQ2pHIQ")).await;
+    let mut chatapi: Option<ChatApi> = None;
 
     // main program loop
     while !app.should_quit {
@@ -34,10 +34,12 @@ async fn main() -> Result<()> {
             Event::Error => app.set_error_mode(),
             Event::Login => {
                 let login_request = app.home.login.get_login_request();
-                match authapi.login(login_request).await {
+                match authapi.login(login_request.clone()).await {
                     Ok(token) => {
-                        app.set_access_token(token.access_token);
-                        // println!("access token: {}", app.access_token)
+                        // println!("access token: {}", token.access_token)
+                        chatapi = Some(ChatApi::new(token.access_token).await);
+                        app.username = login_request.username;
+                        app.home.set_action_to_chat();
                     }
                     Err(error_msg) => {
                         app.home.login.show_error_popup = true;
@@ -48,10 +50,12 @@ async fn main() -> Result<()> {
             }
             Event::Register => {
                 let register_request = app.home.register.get_register_request();
-                match authapi.register(register_request).await {
+                match authapi.register(register_request.clone()).await {
                     Ok(token) => {
-                        app.set_access_token(token.access_token);
-                        // println!("access token: {}", app.access_token)
+                        // println!("access token: {}", token.access_token)
+                        chatapi = Some(ChatApi::new(token.access_token).await);
+                        app.username = register_request.username;
+                        app.home.set_action_to_chat();
                     }
                     Err(error_msg) => {
                         app.home.register.show_error_popup = true;
@@ -63,15 +67,37 @@ async fn main() -> Result<()> {
             Event::Chat => {
                 let message = app.home.chat.get_message();
                 let chat_message = ChatMessage {
-                    username: "atheer2104".into(),
+                    username: app.username.clone(),
                     message: message.into(),
                     timestamp: None,
                 };
 
-                chatapi.chat(chat_message, events.sender.clone()).await?;
+                chatapi
+                    .as_mut()
+                    .unwrap()
+                    .chat(chat_message, events.sender.clone())
+                    .await?;
             }
             Event::Message(message) => {
-                println!("Recevied chat message: {:?}", message)
+                if !app
+                    .home
+                    .chat
+                    .username_to_color
+                    .contains_key(&message.username)
+                {
+                    // println!("adding new color");
+                    let color_rgb = RandomColor::new()
+                        // .luminosity(Luminosity::Bright)
+                        .to_rgb_array();
+
+                    app.home.chat.username_to_color.insert(
+                        message.username.clone(),
+                        Color::Rgb(color_rgb[0], color_rgb[1], color_rgb[2]),
+                    );
+                }
+
+                app.home.chat.chat_messages.push(message);
+                app.home.chat.reset_message_prompt_state();
             }
         }
     }

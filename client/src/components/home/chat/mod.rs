@@ -1,7 +1,10 @@
+use std::collections::HashMap;
+
+use chat::chat::ChatMessage;
 use crossterm::event::KeyEvent;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Margin, Rect},
-    style::Style,
+    style::{Color, Style},
     text::{Line, Span},
     widgets::{
         Block, Borders, Clear, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap,
@@ -10,10 +13,14 @@ use ratatui::{
 };
 use tui_prompts::{FocusState, Prompt, State, TextPrompt, TextState};
 
+use crate::events::{Event, Sender};
+
 pub struct Chat<'a> {
     show_chat: bool,
     message_prompt_state: TextState<'a>,
     pub vertical_scroll: u16,
+    pub username_to_color: HashMap<String, Color>,
+    pub chat_messages: Vec<ChatMessage>,
 }
 
 impl<'a> Default for Chat<'a> {
@@ -22,6 +29,8 @@ impl<'a> Default for Chat<'a> {
             show_chat: false,
             message_prompt_state: TextState::default().with_focus(FocusState::Focused),
             vertical_scroll: 0,
+            username_to_color: HashMap::new(),
+            chat_messages: Vec::new(),
         }
     }
 }
@@ -47,8 +56,12 @@ impl<'a> Chat<'a> {
         self.message_prompt_state.value()
     }
 
-    pub fn handle_submit(&self) {
-        let message = self.message_prompt_state.value();
+    pub fn reset_message_prompt_state(&mut self) {
+        self.message_prompt_state = TextState::default().with_focus(FocusState::Focused)
+    }
+
+    pub fn handle_submit(&self, sender: Sender) {
+        let _ = sender.send(Event::Chat);
 
         // println!("message to send: {}", message);
     }
@@ -70,28 +83,24 @@ impl<'a> Chat<'a> {
             .with_block(Block::bordered())
             .draw(frame, layout[2], &mut self.message_prompt_state);
 
-        let dummy_msg_1 = vec![
-            Span::styled(" User: Alice", Style::default()),
-            Span::styled(" - ", Style::default()),
-            Span::styled("Hello World!", Style::default()),
-        ];
-
-        let dummy_msg_2 = vec![
-            Span::styled(" User: Bob", Style::default()),
-            Span::styled(" - ", Style::default()),
-            Span::styled("Hello!", Style::default()),
-        ];
-
-        let line1 = Line::from(dummy_msg_1);
-        let line2 = Line::from(dummy_msg_2);
-
-        let items = vec![
-            line1.clone(),
-            line2.clone(),
-            line1.clone(),
-            line2.clone(),
-            line1,
-        ];
+        let items: Vec<Line> = self
+            .chat_messages
+            .iter()
+            .map(|chat_message| {
+                let color = self.username_to_color.get(&chat_message.username).unwrap();
+                Line::from(vec![
+                    Span::styled(
+                        format!(" User: {}", chat_message.username),
+                        Style::default().fg(*color),
+                    ),
+                    Span::styled(" - ", Style::default().fg(*color)),
+                    Span::styled(
+                        format!("{}", chat_message.message),
+                        Style::default().fg(*color),
+                    ),
+                ])
+            })
+            .collect();
 
         frame.render_widget(
             Paragraph::new(items.clone())

@@ -84,6 +84,14 @@ impl<'a> Register<'a> {
         self.current_state().focus();
     }
 
+    pub fn reset_textfields_state(&mut self) {
+        self.firstname_state = TextState::default();
+        self.lastname_state = TextState::default();
+        self.username_state = TextState::default();
+        self.email_state = TextState::default();
+        self.password_state = TextState::default();
+    }
+
     pub fn focus_next(&mut self) {
         self.current_state().blur();
         if let Some(field) = self.next_field() {

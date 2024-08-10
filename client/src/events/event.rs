@@ -54,7 +54,8 @@ pub async fn action<'a>(app: &mut App<'a>, key_event: KeyEvent, sender: Sender) 
                         }
                         Action::Chat => {
                             // println!("sending chat event");
-                            let _ = sender.send(Event::Chat);
+                            app.home.chat.handle_submit(sender.clone());
+                            // let _ = sender.send(Event::Chat);
                         }
                     }
                 }

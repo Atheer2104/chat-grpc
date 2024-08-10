@@ -73,6 +73,11 @@ impl<'a> Login<'a> {
         }
     }
 
+    pub fn reset_textfields_state(&mut self) {
+        self.username_state = TextState::default();
+        self.password_state = TextState::default();
+    }
+
     pub fn focus_next(&mut self) {
         self.current_state().blur();
         if let Some(field) = self.next_field() {

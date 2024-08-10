@@ -23,7 +23,7 @@ pub struct App<'a> {
     pub mode: AppMode,
     pub home: Home<'a>,
     pub footer: Footer,
-    pub access_token: String,
+    pub username: String,
 }
 
 impl<'a> App<'a> {
@@ -34,7 +34,7 @@ impl<'a> App<'a> {
             mode: AppMode::View,
             home: Home::new(),
             footer: Footer::new(),
-            access_token: String::from("eyJhbGciOiJIUzUxMiJ9.eyJlbWFpbCI6InRlc3QyNkBnbWFpbCIsImV4cCI6IjE3MjMzOTk5NDYiLCJpYXQiOiIxNzIyNzk1MTQ2IiwiaXNzIjoiQ2hhdC1nUlBDIiwic3ViIjoiYXV0aCB0b2tlbiIsInVzZXJfaWQiOiIyNCIsInVzZXJuYW1lIjoidGVzdDI2In0.2API8Y6AVP4w4oHtNnjpWxgvU45PQUUnl6ak4iz0L5dRdWDWZcSI1CThUtHfxfuRfk1Fs8Gc8_ItjvSAQ2pHIQ"),
+            username: String::new(),
         }
     }
 
@@ -44,10 +44,6 @@ impl<'a> App<'a> {
 
     pub fn set_error_mode(&mut self) {
         self.mode = AppMode::Error
-    }
-
-    pub fn set_access_token(&mut self, access_token: String) {
-        self.access_token = access_token;
     }
 
     pub fn toggle_mode(&mut self) {
