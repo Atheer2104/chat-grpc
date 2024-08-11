@@ -1,10 +1,5 @@
-use std::sync::Arc;
-
-use anyhow::Result;
 use chat::chat::{chatting_client::ChattingClient, ChatMessage};
-use ratatui::symbols::block::HALF;
-use std::sync::Mutex;
-use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
+use tokio::sync::mpsc::UnboundedSender;
 use tokio_stream::{wrappers::UnboundedReceiverStream, StreamExt};
 use tonic::{
     metadata::MetadataValue,

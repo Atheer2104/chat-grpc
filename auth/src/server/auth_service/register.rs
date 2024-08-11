@@ -3,13 +3,7 @@ use anyhow::Context;
 
 use secrecy::ExposeSecret;
 use sqlx::{Executor, Postgres, Row, Transaction};
-use std::sync::Arc;
 use tokio::task::spawn_blocking;
-
-// #[derive(thiserror::Error)]
-// enum RegisterError {
-//     Validation,
-// }
 
 #[tracing::instrument(
     name = "Saving new user details into the database",

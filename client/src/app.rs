@@ -1,5 +1,3 @@
-use chat::chat::ChatMessage;
-
 use crate::components::{Footer, Home};
 
 #[derive(PartialEq)]

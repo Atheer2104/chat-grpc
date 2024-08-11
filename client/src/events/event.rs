@@ -1,4 +1,3 @@
-use chat::chat::ChatMessage;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use crate::{

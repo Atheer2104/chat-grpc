@@ -21,7 +21,7 @@ pub fn render(frame: &mut Frame, app: &mut App) {
         app.home.render(frame, main_layout[0])
     }
 
-    app.footer.render(frame, main_layout[1], &app)
+    app.footer.render(frame, main_layout[1], app)
 
     // f.render_widget(Paragraph::new("Hello, World! (press 'q' to quit)"), area)
 }
