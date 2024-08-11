@@ -4,13 +4,14 @@ use chat::chat::ChatMessage;
 use crossterm::event::KeyEvent;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Margin, Rect},
-    style::{Color, Style},
+    style::{Color, Style, Stylize},
     text::{Line, Span},
     widgets::{
         Block, Borders, Clear, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap,
     },
     Frame,
 };
+use tui_popup::Popup;
 use tui_prompts::{FocusState, Prompt, State, TextPrompt, TextState};
 
 use crate::events::{Event, Sender};
@@ -21,6 +22,8 @@ pub struct Chat<'a> {
     pub vertical_scroll: u16,
     pub username_to_color: HashMap<String, Color>,
     pub chat_messages: Vec<ChatMessage>,
+    pub show_error_popup: bool,
+    pub error_description: String,
 }
 
 impl<'a> Default for Chat<'a> {
@@ -31,6 +34,8 @@ impl<'a> Default for Chat<'a> {
             vertical_scroll: 0,
             username_to_color: HashMap::new(),
             chat_messages: Vec::new(),
+            show_error_popup: false,
+            error_description: String::from(""),
         }
     }
 }
@@ -60,10 +65,21 @@ impl<'a> Chat<'a> {
         self.message_prompt_state = TextState::default().with_focus(FocusState::Focused)
     }
 
-    pub fn handle_submit(&self, sender: Sender) {
-        let _ = sender.send(Event::Chat);
-
+    pub fn handle_submit(&mut self, sender: Sender) {
+        let message = self.message_prompt_state.value();
         // println!("message to send: {}", message);
+
+        match message.is_empty() {
+            true => {
+                self.show_error_popup = true;
+                self.error_description = "Cannot Send Empty Message".into();
+                sender.send(Event::Error).unwrap();
+            }
+            false => {
+                self.show_error_popup = false;
+                let _ = sender.send(Event::Chat);
+            }
+        }
     }
 
     pub fn render(&mut self, frame: &mut Frame, area: Rect) {
@@ -126,5 +142,13 @@ impl<'a> Chat<'a> {
             }),
             &mut scrollbar_state,
         );
+
+        if self.show_error_popup {
+            let error_popup = Popup::new(self.error_description.as_str())
+                .title("Chat Error")
+                .style(Style::default().on_red());
+
+            frame.render_widget(&error_popup, area)
+        }
     }
 }

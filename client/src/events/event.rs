@@ -127,7 +127,7 @@ pub async fn action<'a>(app: &mut App<'a>, key_event: KeyEvent, sender: Sender) 
                     match action {
                         Action::Login => app.home.login.show_error_popup = false,
                         Action::Register => app.home.register.show_error_popup = false,
-                        Action::Chat => todo!(),
+                        Action::Chat => app.home.chat.show_error_popup = false,
                     }
                 }
                 app.mode = AppMode::Write;
