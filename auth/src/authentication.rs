@@ -29,8 +29,8 @@ pub struct Token {
 /// Generated client implementations.
 pub mod auth_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
-    use tonic::codegen::*;
     use tonic::codegen::http::Uri;
+    use tonic::codegen::*;
     #[derive(Debug, Clone)]
     pub struct AuthClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -61,10 +61,7 @@ pub mod auth_client {
             let inner = tonic::client::Grpc::with_origin(inner, origin);
             Self { inner }
         }
-        pub fn with_interceptor<F>(
-            inner: T,
-            interceptor: F,
-        ) -> AuthClient<InterceptedService<T, F>>
+        pub fn with_interceptor<F>(inner: T, interceptor: F) -> AuthClient<InterceptedService<T, F>>
         where
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
@@ -74,9 +71,8 @@ pub mod auth_client {
                     <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
                 >,
             >,
-            <T as tonic::codegen::Service<
-                http::Request<tonic::body::BoxBody>,
-            >>::Error: Into<StdError> + Send + Sync,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
         {
             AuthClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -115,40 +111,31 @@ pub mod auth_client {
             &mut self,
             request: impl tonic::IntoRequest<super::LoginRequest>,
         ) -> std::result::Result<tonic::Response<super::Token>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/authentication.Auth/Login",
-            );
+            let path = http::uri::PathAndQuery::from_static("/authentication.Auth/Login");
             let mut req = request.into_request();
-            req.extensions_mut().insert(GrpcMethod::new("authentication.Auth", "Login"));
+            req.extensions_mut()
+                .insert(GrpcMethod::new("authentication.Auth", "Login"));
             self.inner.unary(req, path, codec).await
         }
         pub async fn register(
             &mut self,
             request: impl tonic::IntoRequest<super::RegisterRequest>,
         ) -> std::result::Result<tonic::Response<super::Token>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/authentication.Auth/Register",
-            );
+            let path = http::uri::PathAndQuery::from_static("/authentication.Auth/Register");
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("authentication.Auth", "Register"));
@@ -195,10 +182,7 @@ pub mod auth_server {
                 max_encoding_message_size: None,
             }
         }
-        pub fn with_interceptor<F>(
-            inner: T,
-            interceptor: F,
-        ) -> InterceptedService<Self, F>
+        pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
         where
             F: tonic::service::Interceptor,
         {
@@ -254,21 +238,15 @@ pub mod auth_server {
                 "/authentication.Auth/Login" => {
                     #[allow(non_camel_case_types)]
                     struct LoginSvc<T: Auth>(pub Arc<T>);
-                    impl<T: Auth> tonic::server::UnaryService<super::LoginRequest>
-                    for LoginSvc<T> {
+                    impl<T: Auth> tonic::server::UnaryService<super::LoginRequest> for LoginSvc<T> {
                         type Response = super::Token;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::LoginRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Auth>::login(&inner, request).await
-                            };
+                            let fut = async move { <T as Auth>::login(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -298,21 +276,15 @@ pub mod auth_server {
                 "/authentication.Auth/Register" => {
                     #[allow(non_camel_case_types)]
                     struct RegisterSvc<T: Auth>(pub Arc<T>);
-                    impl<T: Auth> tonic::server::UnaryService<super::RegisterRequest>
-                    for RegisterSvc<T> {
+                    impl<T: Auth> tonic::server::UnaryService<super::RegisterRequest> for RegisterSvc<T> {
                         type Response = super::Token;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::RegisterRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Auth>::register(&inner, request).await
-                            };
+                            let fut = async move { <T as Auth>::register(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -339,18 +311,14 @@ pub mod auth_server {
                     };
                     Box::pin(fut)
                 }
-                _ => {
-                    Box::pin(async move {
-                        Ok(
-                            http::Response::builder()
-                                .status(200)
-                                .header("grpc-status", "12")
-                                .header("content-type", "application/grpc")
-                                .body(empty_body())
-                                .unwrap(),
-                        )
-                    })
-                }
+                _ => Box::pin(async move {
+                    Ok(http::Response::builder()
+                        .status(200)
+                        .header("grpc-status", "12")
+                        .header("content-type", "application/grpc")
+                        .body(empty_body())
+                        .unwrap())
+                }),
             }
         }
     }

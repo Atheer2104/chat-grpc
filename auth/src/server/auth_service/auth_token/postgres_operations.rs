@@ -27,6 +27,31 @@ pub async fn store_token_db(
 }
 
 #[tracing::instrument(
+    name = "update auth_token in DB"
+    skip(pg_pool, auth_token)
+)]
+pub async fn update_token_db(
+    pg_pool: &PgPool,
+    user_id: &i32,
+    auth_token: &str,
+) -> Result<(), sqlx::Error> {
+    let query = sqlx::query!(
+        r#"
+        UPDATE auth_tokens SET auth_token = $1 WHERE user_id = $2
+        "#,
+        auth_token,
+        user_id
+    );
+
+    pg_pool.execute(query).await.map_err(|e| {
+        tracing::error!("Failed to exectute query: {:?}", e);
+        e
+    })?;
+
+    Ok(())
+}
+
+#[tracing::instrument(
     name = "get auth_token from db"
     skip(db_pool, )
 )]

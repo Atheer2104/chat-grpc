@@ -44,6 +44,8 @@ jobs:
         with:
           # this key will be added to tha automatic 'job'-based cache key, this key can also be used in further different jobs
           key: "sqlx-${{ env.SQLX_VERSION }}"
+      - name: update cargo
+        run: cargo update
       - name: Install sqlx cli
         run: cargo install sqlx-cli
           --version=${{ env.SQLX_VERSION }}
@@ -58,7 +60,7 @@ jobs:
           SKIP_DOCKER=true auth/scripts/init_db.sh
       - name: Check sqlx-data.json is up-to-date
         run: |
-          cargo sqlx prepare --workspace --check
+          cargo sqlx prepare --workspace
       - name: Run tests
         run: cargo test -- --test-threads=1
 

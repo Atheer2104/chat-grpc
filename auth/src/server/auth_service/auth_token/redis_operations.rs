@@ -1,4 +1,5 @@
 use anyhow::anyhow;
+use chrono::{Duration, Local};
 use redis::{AsyncCommands, RedisResult};
 
 use crate::server::RedisCon;
@@ -18,6 +19,15 @@ pub async fn store_token_redis(
 
     if res.is_err() {
         return Err(anyhow!("couldn't save auth token in redis"));
+    }
+
+    let one_week_from_now_timestamp = (Local::now() + Duration::weeks(1)).timestamp();
+    let expire_res: RedisResult<()> = redis_con
+        .expire_at(user_id, one_week_from_now_timestamp)
+        .await;
+
+    if expire_res.is_err() {
+        return Err(anyhow!("couldn't set expire time for auth token in redis"));
     }
 
     Ok(())
