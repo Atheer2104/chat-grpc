@@ -402,6 +402,7 @@ dependencies = [
  "random_color",
  "ratatui",
  "tokio",
+ "tokio-stream",
  "tonic",
  "tui-big-text",
  "tui-popup",

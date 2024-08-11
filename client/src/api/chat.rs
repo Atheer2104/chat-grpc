@@ -4,6 +4,8 @@ use anyhow::Result;
 use chat::chat::{chatting_client::ChattingClient, ChatMessage};
 use ratatui::symbols::block::HALF;
 use std::sync::Mutex;
+use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
+use tokio_stream::{wrappers::UnboundedReceiverStream, StreamExt};
 use tonic::{
     metadata::MetadataValue,
     service::{interceptor::InterceptedService, Interceptor},
@@ -33,44 +35,45 @@ impl Interceptor for MyInterceptor {
 }
 
 pub struct ChatApi {
-    client: ChattingClient<InterceptedService<Channel, MyInterceptor>>,
-    spawn_inbound_stream_task: bool,
+    pub sender: UnboundedSender<ChatMessage>,
 }
 
 impl ChatApi {
-    pub async fn new(access_token: String) -> Self {
+    pub async fn new(access_token: String, event_sender: Sender) -> Self {
         let channel = Channel::from_static(ADDRESS)
             .connect()
             .await
             .expect("Failed to connect to chat service");
 
-        let client: ChattingClient<InterceptedService<Channel, MyInterceptor>> =
+        let mut client: ChattingClient<InterceptedService<Channel, MyInterceptor>> =
             ChattingClient::with_interceptor(channel, MyInterceptor { access_token });
 
-        Self {
-            client,
-            spawn_inbound_stream_task: false,
-        }
+        let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+        let mut messages_to_send = UnboundedReceiverStream::new(rx);
+
+        tokio::spawn(async move {
+            let outbound = async_stream::stream! {
+                while let Some(message) = messages_to_send.next().await {
+                    yield message
+                }
+            };
+
+            let response = client
+                .chat(Request::new(outbound))
+                .await
+                .expect("Failed to get message");
+
+            let mut inbound = response.into_inner();
+
+            while let Some(message) = inbound.message().await.expect("Failed to read") {
+                let _ = event_sender.send(Event::Message(message));
+            }
+        });
+
+        Self { sender: tx }
     }
 
-    pub async fn chat(&mut self, chat_message: ChatMessage, sender: Sender) -> Result<()> {
-        let outbound = async_stream::stream! {
-            yield chat_message
-        };
-
-        let response = self.client.chat(Request::new(outbound)).await?;
-        let mut inbound = response.into_inner();
-
-        if !self.spawn_inbound_stream_task {
-            self.spawn_inbound_stream_task = true;
-            tokio::spawn(async move {
-                while let Some(message) = inbound.message().await.expect("Failed to read") {
-                    // println!("Received Message: {:?}", message);
-                    let _ = sender.send(Event::Message(message));
-                }
-            });
-        }
-
-        Ok(())
+    pub async fn chat(&mut self, chat_message: ChatMessage) {
+        let _ = self.sender.send(chat_message);
     }
 }

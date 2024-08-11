@@ -37,7 +37,8 @@ async fn main() -> Result<()> {
                 match authapi.login(login_request.clone()).await {
                     Ok(token) => {
                         // println!("access token: {}", token.access_token)
-                        chatapi = Some(ChatApi::new(token.access_token).await);
+                        chatapi =
+                            Some(ChatApi::new(token.access_token, events.sender.clone()).await);
                         app.username = login_request.username;
                         app.home.set_action_to_chat();
                     }
@@ -53,7 +54,8 @@ async fn main() -> Result<()> {
                 match authapi.register(register_request.clone()).await {
                     Ok(token) => {
                         // println!("access token: {}", token.access_token)
-                        chatapi = Some(ChatApi::new(token.access_token).await);
+                        chatapi =
+                            Some(ChatApi::new(token.access_token, events.sender.clone()).await);
                         app.username = register_request.username;
                         app.home.set_action_to_chat();
                     }
@@ -72,11 +74,7 @@ async fn main() -> Result<()> {
                     timestamp: None,
                 };
 
-                chatapi
-                    .as_mut()
-                    .unwrap()
-                    .chat(chat_message, events.sender.clone())
-                    .await?;
+                chatapi.as_mut().unwrap().chat(chat_message).await;
             }
             Event::Message(message) => {
                 if !app
@@ -85,10 +83,7 @@ async fn main() -> Result<()> {
                     .username_to_color
                     .contains_key(&message.username)
                 {
-                    // println!("adding new color");
-                    let color_rgb = RandomColor::new()
-                        // .luminosity(Luminosity::Bright)
-                        .to_rgb_array();
+                    let color_rgb = RandomColor::new().to_rgb_array();
 
                     app.home.chat.username_to_color.insert(
                         message.username.clone(),
