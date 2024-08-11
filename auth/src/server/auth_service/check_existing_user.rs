@@ -11,6 +11,8 @@ use super::verify_password_hash;
 pub enum CheckUserExistsError {
     #[error("Provided credintels does not belong to any registered user")]
     NonExistingUser,
+    #[error("Provided password is wrong")]
+    WrongPassword,
     #[error("Something went wrong in the DB: {0}")]
     DatabaseError(#[from] sqlx::Error),
     #[error(transparent)]
@@ -33,6 +35,8 @@ pub async fn get_stored_password_hash(
         e
     })?
     .map(|row| (row.user_id, Secret::new(row.password_hash)));
+
+    // tracing::info!("getting stored passwordh hash query: {:?}", query);
 
     Ok(query)
 }
@@ -58,11 +62,16 @@ pub async fn check_user_exists(
         expected_password_hash = stored_password_hash;
     }
 
-    let _ = spawn_blocking(move || {
+    let result_verifying_password = spawn_blocking(move || {
         verify_password_hash(expected_password_hash, login_request.password)
     })
     .await
-    .map_err(CheckUserExistsError::UnexpectedError);
+    .map_err(CheckUserExistsError::UnexpectedError)?;
+
+    match result_verifying_password {
+        Ok(_) => {}
+        Err(_) => return Err(CheckUserExistsError::WrongPassword),
+    }
 
     match user_id {
         // the user was successfully added
