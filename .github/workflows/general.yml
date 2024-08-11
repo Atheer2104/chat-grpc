@@ -44,6 +44,8 @@ jobs:
         with:
           # this key will be added to tha automatic 'job'-based cache key, this key can also be used in further different jobs
           key: "sqlx-${{ env.SQLX_VERSION }}"
+      - name: update cargo
+        run: cargo update
       - name: Install sqlx cli
         run: cargo install sqlx-cli
           --version=${{ env.SQLX_VERSION }}
