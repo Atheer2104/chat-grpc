@@ -33,12 +33,8 @@ macro_rules! check_claim_expired {
 }
 
 pub fn auth_interceptor(req: Request<()>) -> Result<Request<()>, Status> {
-    println!("auth interceptor executed");
-
     match req.metadata().get("authorization") {
         Some(t) => {
-            println!("received value: {:?}", t);
-
             tracing::info!("Reading secrets");
 
             let secrets = match get_secrets() {
@@ -65,14 +61,13 @@ pub fn auth_interceptor(req: Request<()>) -> Result<Request<()>, Status> {
                 None => return Err(Status::internal("Couldn't destructure the auth token")),
             };
 
-            println!("token str: {}", token_str);
-
             let claims: BTreeMap<String, String> = token_str.verify_with_key(&key).unwrap();
-            println!("{:?}", claims);
 
             check_claim_key!(&claims, "iss", "Chat-gRPC", "JWT iss does not match");
             check_claim_key!(&claims, "sub", "auth token", "JWT sub doese not match");
             check_claim_expired!(claims["exp"], "Auth token has expired");
+
+            tracing::info!("access token was valid");
 
             Ok(req)
         }
