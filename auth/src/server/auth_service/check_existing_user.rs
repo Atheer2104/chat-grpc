@@ -62,6 +62,10 @@ pub async fn check_user_exists(
         expected_password_hash = stored_password_hash;
     }
 
+    if user_id.is_none() {
+        return Err(CheckUserExistsError::NonExistingUser);
+    }
+
     let result_verifying_password = spawn_blocking(move || {
         verify_password_hash(expected_password_hash, login_request.password)
     })
@@ -73,9 +77,5 @@ pub async fn check_user_exists(
         Err(_) => return Err(CheckUserExistsError::WrongPassword),
     }
 
-    match user_id {
-        // the user was successfully added
-        Some(user_id) => Ok(user_id),
-        None => Err(CheckUserExistsError::NonExistingUser),
-    }
+    Ok(user_id.unwrap())
 }

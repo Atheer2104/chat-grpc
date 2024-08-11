@@ -74,7 +74,7 @@ impl Auth for AuthenticationService {
             },
         };
 
-        let auth_token = match get_token_redis(self.redis_con.clone(), &user_id).await {
+        let mut auth_token = match get_token_redis(self.redis_con.clone(), &user_id).await {
             Ok(e) => e,
             Err(_) => match get_token_db(&self.db_pool, &user_id).await {
                 Ok(e) => match e {
@@ -83,6 +83,50 @@ impl Auth for AuthenticationService {
                 },
                 Err(_) => return Err(Status::internal("Couldn't get auth token")),
             },
+        };
+
+        let secret_key = self.secrets.jwt_secret.clone();
+        auth_token = match auth_token_expired(secret_key.clone(), auth_token.as_str()) {
+            Ok(token_expired) => {
+                if token_expired {
+                    tracing::info!("auth token has expired");
+                    let new_auth_token = match spawn_blocking(move || {
+                        generate_auth_token(secret_key, user_id.to_string().as_str())
+                    })
+                    .await
+                    {
+                        Ok(res) => match res {
+                            Ok(e) => e,
+                            Err(_) => {
+                                return Err(Status::internal("Failed to generate auth token"))
+                            }
+                        },
+                        Err(_) => return Err(Status::internal("Could not create a auth token")),
+                    };
+
+                    if update_token_db(&self.db_pool, &user_id, &new_auth_token)
+                        .await
+                        .is_err()
+                    {
+                        return Err(Status::internal(
+                            "auth token was invalid and could not update auth token in DB",
+                        ));
+                    }
+
+                    if store_token_redis(self.redis_con.clone(), &user_id, &new_auth_token)
+                        .await
+                        .is_err()
+                    {
+                        return Err(Status::internal("Could not store auth token into redis"));
+                    }
+
+                    new_auth_token
+                } else {
+                    // returning original auth_token
+                    auth_token
+                }
+            }
+            Err(_) => return Err(Status::internal("Couldn't check expire time of auth token")),
         };
 
         let token = Token {
@@ -119,7 +163,7 @@ impl Auth for AuthenticationService {
             }
             Ok(s) => s,
         };
-        let register_request_arc = Arc::new(reqister_request);
+        // let register_request_arc = Arc::new(reqister_request);
 
         let mut transaction = match self.db_pool.begin().await {
             Ok(transaction) => transaction,
@@ -130,19 +174,14 @@ impl Auth for AuthenticationService {
             }
         };
 
-        let user_id =
-            match register_user_into_db(&mut transaction, register_request_arc.clone()).await {
-                Err(_) => return Err(Status::internal("Could not retrieve user_id")),
-                Ok(user_id) => user_id,
-            };
+        let user_id = match register_user_into_db(&mut transaction, reqister_request).await {
+            Err(_) => return Err(Status::internal("Could not retrieve user_id")),
+            Ok(user_id) => user_id,
+        };
 
         let secret_key = self.secrets.jwt_secret.clone();
         let auth_token = match spawn_blocking(move || {
-            generate_auth_token(
-                secret_key,
-                user_id.to_string().as_str(),
-                register_request_arc.clone(),
-            )
+            generate_auth_token(secret_key, user_id.to_string().as_str())
         })
         .await
         {
@@ -164,7 +203,8 @@ impl Auth for AuthenticationService {
             Ok(_) => match store_token_redis(self.redis_con.clone(), &user_id, &auth_token).await {
                 Ok(_) => (),
                 Err(e) => {
-                    tracing::error!("Failed to save auth token to redis {:?}", e)
+                    tracing::error!("Failed to save auth token to redis {:?}", e);
+                    return Err(Status::internal("Could not store auth token into redis"));
                 }
             },
             Err(_) => {

@@ -13,19 +13,16 @@ use tokio::task::spawn_blocking;
 
 #[tracing::instrument(
     name = "Saving new user details into the database",
-    skip(transaction, register_request_arc)
+    skip(transaction, register_request)
 )]
 pub async fn register_user_into_db(
     transaction: &mut Transaction<'_, Postgres>,
-    register_request_arc: Arc<RegisterData>,
+    register_request: RegisterData,
 ) -> Result<i32, anyhow::Error> {
-    let register_request = register_request_arc.clone();
-
-    let password_hash = spawn_blocking(move || {
-        compute_password_hash(register_request_arc.clone().password.as_ref())
-    })
-    .await?
-    .context("failed to hash password")?;
+    let password_hash =
+        spawn_blocking(move || compute_password_hash(register_request.password.as_ref()))
+            .await?
+            .context("failed to hash password")?;
 
     // let password_hash =
     //     compute_password_hash(password_arc.clone().as_ref()).context("failed to hash password")?;

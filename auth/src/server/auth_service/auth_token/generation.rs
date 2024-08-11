@@ -5,17 +5,11 @@ use jwt::SignWithKey;
 use secrecy::{ExposeSecret, Secret};
 use sha2::Sha512;
 use std::collections::BTreeMap;
-use std::sync::Arc;
-
-use crate::server::RegisterData;
 
 pub fn generate_auth_token(
     secret_key: Secret<String>,
     user_id: &str,
-    register_request_arc: Arc<RegisterData>,
 ) -> Result<String, anyhow::Error> {
-    let register_request = register_request_arc.clone();
-
     let key: Hmac<Sha512> = Hmac::new_from_slice(secret_key.expose_secret().as_bytes())?;
     let mut claims = BTreeMap::new();
 
@@ -33,8 +27,6 @@ pub fn generate_auth_token(
 
     // application claims
     claims.insert("user_id", user_id);
-    claims.insert("username", register_request.username.as_ref());
-    claims.insert("email", register_request.email.as_ref());
     let token = claims.sign_with_key(&key)?;
 
     Ok(token)
