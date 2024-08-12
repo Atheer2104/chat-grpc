@@ -12,8 +12,8 @@ pub struct ChatMessage {
 /// Generated client implementations.
 pub mod chatting_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
-    use tonic::codegen::*;
     use tonic::codegen::http::Uri;
+    use tonic::codegen::*;
     #[derive(Debug, Clone)]
     pub struct ChattingClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -57,9 +57,8 @@ pub mod chatting_client {
                     <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
                 >,
             >,
-            <T as tonic::codegen::Service<
-                http::Request<tonic::body::BoxBody>,
-            >>::Error: Into<StdError> + Send + Sync,
+            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
+                Into<StdError> + Send + Sync,
         {
             ChattingClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -101,19 +100,17 @@ pub mod chatting_client {
             tonic::Response<tonic::codec::Streaming<super::ChatMessage>>,
             tonic::Status,
         > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::new(
-                        tonic::Code::Unknown,
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static("/chat.Chatting/chat");
             let mut req = request.into_streaming_request();
-            req.extensions_mut().insert(GrpcMethod::new("chat.Chatting", "chat"));
+            req.extensions_mut()
+                .insert(GrpcMethod::new("chat.Chatting", "chat"));
             self.inner.streaming(req, path, codec).await
         }
     }
@@ -128,8 +125,7 @@ pub mod chatting_server {
         /// Server streaming response type for the chat method.
         type chatStream: tonic::codegen::tokio_stream::Stream<
                 Item = std::result::Result<super::ChatMessage, tonic::Status>,
-            >
-            + Send
+            > + Send
             + 'static;
         async fn chat(
             &self,
@@ -159,10 +155,7 @@ pub mod chatting_server {
                 max_encoding_message_size: None,
             }
         }
-        pub fn with_interceptor<F>(
-            inner: T,
-            interceptor: F,
-        ) -> InterceptedService<Self, F>
+        pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
         where
             F: tonic::service::Interceptor,
         {
@@ -218,22 +211,17 @@ pub mod chatting_server {
                 "/chat.Chatting/chat" => {
                     #[allow(non_camel_case_types)]
                     struct chatSvc<T: Chatting>(pub Arc<T>);
-                    impl<T: Chatting> tonic::server::StreamingService<super::ChatMessage>
-                    for chatSvc<T> {
+                    impl<T: Chatting> tonic::server::StreamingService<super::ChatMessage> for chatSvc<T> {
                         type Response = super::ChatMessage;
                         type ResponseStream = T::chatStream;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::ResponseStream>,
-                            tonic::Status,
-                        >;
+                        type Future =
+                            BoxFuture<tonic::Response<Self::ResponseStream>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<tonic::Streaming<super::ChatMessage>>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Chatting>::chat(&inner, request).await
-                            };
+                            let fut = async move { <T as Chatting>::chat(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -260,18 +248,14 @@ pub mod chatting_server {
                     };
                     Box::pin(fut)
                 }
-                _ => {
-                    Box::pin(async move {
-                        Ok(
-                            http::Response::builder()
-                                .status(200)
-                                .header("grpc-status", "12")
-                                .header("content-type", "application/grpc")
-                                .body(empty_body())
-                                .unwrap(),
-                        )
-                    })
-                }
+                _ => Box::pin(async move {
+                    Ok(http::Response::builder()
+                        .status(200)
+                        .header("grpc-status", "12")
+                        .header("content-type", "application/grpc")
+                        .body(empty_body())
+                        .unwrap())
+                }),
             }
         }
     }
