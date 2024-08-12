@@ -8,6 +8,10 @@
 
 The project is fully asynchronous, ensuring high performance and responsiveness. A Terminal User Interface (TUI) is provided to interact with the service.
 
+## Video Showcase 
+
+![grab-landing-page](https://github.com/Atheer2104/chat-grpc/blob/main/video-showcase.gif)
+
 # Installation
 ## Requirements 
 - make sure that you have [docker](https://www.docker.com) installed
