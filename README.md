@@ -10,7 +10,7 @@ The project is fully asynchronous, ensuring high performance and responsiveness.
 
 ## Video Showcase 
 
-![grab-landing-page](https://github.com/Atheer2104/chat-grpc/blob/main/video-showcase.gif)
+![grab-landing-page](video-showcase.gif)
 
 # Installation
 ## Requirements 
@@ -18,7 +18,7 @@ The project is fully asynchronous, ensuring high performance and responsiveness.
 - make sure that you have [rust](https://www.rust-lang.org/tools/install) installed
 - install [bunyan](https://github.com/trentm/node-bunyan) as below (this requires [node](https://nodejs.org/en/download/package-manager) to be installed first)
 ```sh
-    npm install -g bunyan
+npm install -g bunyan
 ```
 
 ## Set up repo
@@ -72,3 +72,11 @@ Main Technologies used
 - [Tokio](https://tokio.rs) - A rust Asynchronous runtime, Used to schedule and spawn asynchronous tasks
 - [Tracing](https://github.com/tokio-rs/tracing) - Used to write logs asynchronously
 - [Ratatui](https://ratatui.rs) -  Used to create Terminal User Interfac
+
+# License 
+
+The project is licensed under the **MIT license**
+
+See [LICENSE](LICENSE) for more information.
+
+
